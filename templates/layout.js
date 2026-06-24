@@ -77,8 +77,10 @@ export function head(content, opts = {}) {
   <link rel="manifest" href="/site.webmanifest">
 
   <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="preload" href="/css/styles.css" as="style">
   <link rel="stylesheet" href="/css/styles.css">
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"></noscript>
 
   <script>
     // Set the theme before first paint to avoid a flash of the wrong colors.

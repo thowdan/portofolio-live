@@ -125,7 +125,7 @@ ${head(content, { path: '/' })}
         <a class="nav-link" href="#about">About</a>
         <a class="nav-link" href="#contact">Contact</a>
         ${themeToggle}
-        <a class="btn btn-accent btn-sm" href="${esc(identity.resumeUrl)}" target="_blank" rel="noopener">Résumé</a>
+        ${identity.resumeUrl ? `<a class="btn btn-accent btn-sm" href="${esc(identity.resumeUrl)}" target="_blank" rel="noopener">Résumé</a>` : ''}
       </div>
     </div>
   </nav>
@@ -144,7 +144,7 @@ ${head(content, { path: '/' })}
       <div class="reveal hero-photo-wrap">
         <div class="hero-photo-glow" aria-hidden="true"></div>
         <div class="hero-photo">
-          <img src="${esc(identity.photo)}" alt="${esc(identity.name)}" width="640" height="800" loading="eager">
+          <img src="${esc(identity.photo)}" alt="${esc(identity.name)}" width="640" height="800" loading="eager" fetchpriority="high" decoding="async">
           <div class="hero-photo-card">
             <div>
               <div class="hero-photo-name">${esc(identity.cardName)}</div>
@@ -211,7 +211,11 @@ ${head(content, { path: '/' })}
             <a class="btn btn-accent" href="mailto:${esc(identity.email)}"><i class="fa-solid fa-envelope" aria-hidden="true"></i>${esc(
     identity.email
   )}</a>
-            <a class="btn btn-ghost" href="${esc(identity.resumeUrl)}" target="_blank" rel="noopener"><i class="fa-solid fa-arrow-down-to-line" aria-hidden="true"></i>Download résumé</a>
+            ${
+              identity.resumeUrl
+                ? `<a class="btn btn-ghost" href="${esc(identity.resumeUrl)}" target="_blank" rel="noopener"><i class="fa-solid fa-arrow-down-to-line" aria-hidden="true"></i>Download résumé</a>`
+                : ''
+            }
           </div>
           <div class="contact-links">
             <a href="${esc(identity.github)}" target="_blank" rel="noopener"><i class="fa-brands fa-github" aria-hidden="true"></i>${esc(

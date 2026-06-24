@@ -81,13 +81,13 @@ Set them in **Vercel → Project → Settings → Environment Variables**, then 
 
 ## Going-live checklist
 
-- [ ] Set your real domain in three spots once you have one:
-      `lib/content.js` (`site.url`), `robots.txt`, and `sitemap.xml`.
-      (Until then the default `your-site.vercel.app` placeholder is used for
-      absolute SEO URLs only — everything else works regardless.)
-- [ ] Drop your `resume.pdf` into the project root (the Résumé buttons link to it).
-- [ ] Replace `myjpg.jpg` with your preferred photo / social-share image if desired.
-- [ ] Add `ADMIN_PASSWORD`, `SESSION_SECRET`, and the Upstash vars in Vercel.
+- [x] Domain is set to `https://thowdanaleryani.vercel.app` in `lib/content.js`,
+      `robots.txt`, and `sitemap.xml`. Change those 3 spots if you ever move domains.
+- [ ] Add `ADMIN_PASSWORD`, `SESSION_SECRET`, and the Upstash vars in Vercel
+      (see the table above), then redeploy — required for the `/admin` editor.
+- [ ] (Optional) Add a `resume.pdf` and set the Résumé URL in `/admin`. Until then
+      the Résumé buttons are hidden automatically, so there's no broken link.
+- [ ] (Optional) Replace `myjpg.jpg` with your preferred photo / social-share image.
 
 ## SEO
 

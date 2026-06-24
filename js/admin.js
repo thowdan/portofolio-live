@@ -130,7 +130,7 @@
       field('Meta description', s.description, function (v) { s.description = v; }, { textarea: true }),
       field('Keywords (comma separated)', s.keywords, function (v) { s.keywords = v; }),
       row(
-        field('Canonical site URL', s.url, function (v) { s.url = v; }, { hint: 'e.g. https://your-site.vercel.app' }),
+        field('Canonical site URL', s.url, function (v) { s.url = v; }, { hint: 'e.g. https://thowdanaleryani.vercel.app' }),
         field('Social share image path', s.ogImage, function (v) { s.ogImage = v; })
       )
     ));
