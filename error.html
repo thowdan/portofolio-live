@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+  body { margin: 0; background: #F5F5F7; color: #1D1D1F; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif; transition: background .5s ease; }
+  a { color: inherit; text-decoration: none; }
+  ::selection { background: rgba(0,113,227,0.18); }
+  @keyframes pfFloatA { 0% { transform: translate(0,0) scale(1); } 50% { transform: translate(36px,-26px) scale(1.08); } 100% { transform: translate(0,0) scale(1); } }
+  @keyframes pfFloatB { 0% { transform: translate(0,0) scale(1); } 50% { transform: translate(-44px,34px) scale(1.12); } 100% { transform: translate(0,0) scale(1); } }
+  @keyframes pfRise { from { transform: translateY(18px); } to { transform: none; } }
+</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</helmet>
+<div ref="{{ rootRef }}" style="{{ rootStyle }}">
+
+  <!-- page background layer (child consuming var, recolors reliably; no transition) -->
+  <div style="position:fixed; inset:0; z-index:0; background:var(--bg);"></div>
+
+  <!-- ambient glow -->
+  <div style="position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden;">
+    <div style="position:absolute; top:-14%; left:50%; transform:translateX(-50%); width:60vw; height:60vw; border-radius:50%; background:radial-gradient(circle at 50% 40%, var(--glow1), rgba(0,113,227,0) 62%); filter:blur(46px); animation:pfFloatA 24s ease-in-out infinite;"></div>
+    <div style="position:absolute; bottom:-20%; right:-10%; width:46vw; height:46vw; border-radius:50%; background:radial-gradient(circle at 50% 50%, var(--glow2), rgba(94,55,180,0) 62%); filter:blur(46px); animation:pfFloatB 28s ease-in-out infinite;"></div>
+  </div>
+
+  <!-- minimal top bar -->
+  <header style="position:relative; z-index:10; color:var(--text); padding:24px 32px; display:flex; align-items:center; justify-content:space-between;">
+    <a href="Portfolio.dc.html" style="display:inline-flex; align-items:center; gap:11px;">
+      <span style="display:flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:11px; background:var(--logo-grad); border:1px solid var(--border-2); box-shadow:inset 0 1px 0 var(--inset), 0 4px 12px rgba(0,0,0,0.08); font-size:14px; font-weight:600; letter-spacing:0.5px; color:var(--text);">TA</span>
+      <span style="font-size:15px; font-weight:600; letter-spacing:-0.01em;">Thowdan Al-Eryani</span>
+    </a>
+    <button onClick="{{ toggleTheme }}" aria-label="Toggle dark mode" style="display:flex; align-items:center; justify-content:center; width:38px; height:38px; border-radius:11px; border:1px solid var(--border-2); background:var(--surface); color:var(--text); cursor:pointer; transition:background .25s ease, transform .25s ease;" style-hover="transform:translateY(-1px); background:var(--surface-strong);">
+      <i class="{{ themeIcon }}" style="font-size:14px;"></i>
+    </button>
+  </header>
+
+  <!-- centered error card -->
+  <main style="position:relative; z-index:10; color:var(--text); flex:1; display:flex; align-items:center; justify-content:center; padding:40px 32px 96px;">
+    <div style="animation:pfRise .9s cubic-bezier(.2,.7,.2,1); position:relative; width:100%; max-width:620px; text-align:center; padding:64px 48px; border-radius:32px; overflow:hidden; background:var(--surface); border:1px solid var(--border); backdrop-filter:blur(26px) saturate(180%); -webkit-backdrop-filter:blur(26px) saturate(180%); box-shadow:inset 0 1px 0 var(--inset), var(--shadow);">
+      <div style="position:absolute; top:-44%; left:50%; transform:translateX(-50%); width:70%; height:120%; background:radial-gradient(circle at 50% 30%, var(--glow1), rgba(0,113,227,0) 60%); filter:blur(34px); pointer-events:none;"></div>
+
+      <div style="position:relative;">
+        <div style="display:inline-flex; align-items:center; gap:9px; padding:7px 15px; border-radius:999px; background:var(--surface-strong); border:1px solid var(--border); font-size:13px; color:var(--text-mut); margin-bottom:30px;">
+          <span style="width:7px; height:7px; border-radius:50%; background:{{ dotColor }}; box-shadow:0 0 10px {{ dotColor }};"></span>
+          {{ badge }}
+        </div>
+
+        <div style="font-size:128px; line-height:1; font-weight:600; letter-spacing:-0.04em; color:var(--accent); margin-bottom:20px;">{{ code }}</div>
+
+        <h1 style="margin:0 0 14px; font-size:34px; font-weight:600; letter-spacing:-0.025em;">{{ title }}</h1>
+        <p style="margin:0 auto 36px; max-width:420px; font-size:18px; line-height:1.55; color:var(--text-mut);">{{ message }}</p>
+
+        <div style="display:flex; gap:14px; justify-content:center; flex-wrap:wrap;">
+          <a href="Portfolio.dc.html" style="padding:14px 28px; font-size:15px; font-weight:500; border-radius:14px; color:#fff; background:var(--accent); box-shadow:0 12px 30px rgba(0,113,227,0.32); transition:transform .25s ease, box-shadow .25s ease;" style-hover="transform:translateY(-2px); box-shadow:0 16px 38px rgba(0,113,227,0.45);">Back to home</a>
+          <a href="/cdn-cgi/l/email-protection#e195898e9685808fd7d5a1868c80888dcf828e8c" style="padding:14px 28px; font-size:15px; font-weight:500; border-radius:14px; color:var(--text); background:var(--surface); border:1px solid var(--border-2); box-shadow:0 4px 14px rgba(0,0,0,0.05); transition:transform .25s ease, background .25s ease;" style-hover="transform:translateY(-2px); background:var(--surface-strong);">{{ secondaryLabel }}</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer style="position:relative; z-index:10; text-align:center; padding:0 32px 40px; font-size:13px; color:var(--text-faint);">© {{ year }} Thowdan Al-Eryani</footer>
+</div>
+</x-dc>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script type="text/x-dc" data-dc-script data-props="{&quot;code&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;404&quot;,&quot;500&quot;,&quot;403&quot;],&quot;default&quot;:&quot;404&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.rootRef = React.createRef();
+    let saved = 'light';
+    try { saved = localStorage.getItem('pf-theme') === 'dark' ? 'dark' : 'light'; } catch (e) {}
+    this.state = { theme: saved };
+  }
+
+  static THEMES = {
+    light: {
+      '--bg': '#F5F5F7',
+      '--text': '#1D1D1F',
+      '--text-mut': 'rgba(0,0,0,0.55)',
+      '--text-faint': 'rgba(0,0,0,0.45)',
+      '--accent': '#0071E3',
+      '--surface': 'rgba(255,255,255,0.72)',
+      '--surface-strong': 'rgba(255,255,255,0.95)',
+      '--border': 'rgba(0,0,0,0.06)',
+      '--border-2': 'rgba(0,0,0,0.08)',
+      '--inset': 'rgba(255,255,255,0.8)',
+      '--shadow': '0 30px 70px rgba(0,0,0,0.12)',
+      '--glow1': 'rgba(0,113,227,0.16)',
+      '--glow2': 'rgba(88,86,214,0.10)',
+      '--logo-grad': 'linear-gradient(150deg, #ffffff, #ececf0)',
+      bodyBg: '#F5F5F7',
+      icon: 'fa-solid fa-moon',
+    },
+    dark: {
+      '--bg': '#0A0B0F',
+      '--text': '#EDEFF5',
+      '--text-mut': 'rgba(237,239,245,0.58)',
+      '--text-faint': 'rgba(237,239,245,0.4)',
+      '--accent': '#0A84FF',
+      '--surface': 'rgba(255,255,255,0.05)',
+      '--surface-strong': 'rgba(255,255,255,0.1)',
+      '--border': 'rgba(255,255,255,0.1)',
+      '--border-2': 'rgba(255,255,255,0.14)',
+      '--inset': 'rgba(255,255,255,0.14)',
+      '--shadow': '0 30px 70px rgba(0,0,0,0.5)',
+      '--glow1': 'rgba(10,132,255,0.28)',
+      '--glow2': 'rgba(94,55,180,0.2)',
+      '--logo-grad': 'linear-gradient(150deg, rgba(255,255,255,0.16), rgba(255,255,255,0.04))',
+      bodyBg: '#0A0B0F',
+      icon: 'fa-solid fa-sun',
+    },
+  };
+
+  applyBody(theme) {
+    const vars = Component.THEMES[theme];
+    document.documentElement.style.background = vars['--bg'];
+    document.body.style.background = vars['--bg'];
+  }
+
+  setTheme(theme) {
+    const next = theme === 'dark' ? 'dark' : 'light';
+    try { localStorage.setItem('pf-theme', next); } catch (e) {}
+    this.applyBody(next);
+    this.setState({ theme: next });
+  }
+
+  rootStyle() {
+    const vars = Component.THEMES[this.state.theme];
+    const style = {
+      position: 'relative', width: '100%', minHeight: '100vh', display: 'flex',
+      flexDirection: 'column', overflow: 'hidden',
+      background: 'transparent',
+    };
+    Object.keys(vars).forEach((k) => { if (k.startsWith('--')) style[k] = vars[k]; });
+    return style;
+  }
+
+  renderVals() {
+    const code = String(this.props.code ?? '404');
+    const map = {
+      '404': {
+        badge: 'Error 404',
+        title: 'Page not found',
+        message: "The page you're looking for doesn't exist, was moved, or the link is broken.",
+        secondaryLabel: 'Report a broken link',
+        dotColor: '#0A84FF',
+      },
+      '500': {
+        badge: 'Error 500',
+        title: 'Something went wrong',
+        message: 'An unexpected error occurred on our end. Please try again in a moment.',
+        secondaryLabel: 'Let me know',
+        dotColor: '#FF9F0A',
+      },
+      '403': {
+        badge: 'Error 403',
+        title: 'Access denied',
+        message: "You don't have permission to view this page. If you think this is a mistake, get in touch.",
+        secondaryLabel: 'Request access',
+        dotColor: '#FF453A',
+      },
+    };
+    const data = map[code] || map['404'];
+    return {
+      rootRef: this.rootRef,
+      rootStyle: this.rootStyle(),
+      themeIcon: Component.THEMES[this.state.theme].icon,
+      toggleTheme: () => this.setTheme(this.state.theme === 'dark' ? 'light' : 'dark'),
+      code,
+      year: new Date().getFullYear(),
+      badge: data.badge,
+      title: data.title,
+      message: data.message,
+      secondaryLabel: data.secondaryLabel,
+      dotColor: data.dotColor,
+    };
+  }
+
+  componentDidMount() {
+    this.applyBody(this.state.theme);
+  }
+
+  componentDidUpdate() {
+    this.applyBody(this.state.theme);
+  }
+}
+</script>
+</body>
+</html>
