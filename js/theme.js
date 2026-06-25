@@ -35,4 +35,29 @@
   document.querySelectorAll('[data-year]').forEach(function (el) {
     el.textContent = String(new Date().getFullYear());
   });
+
+  // Scroll-triggered reveals: elements with .reveal animate in as they enter the
+  // viewport. The <head> adds `reveal-on` to <html> pre-paint, which hides them
+  // via CSS until we add `.is-visible` here.
+  if (root.classList.contains('reveal-on')) {
+    var reveals = [].slice.call(document.querySelectorAll('.reveal'));
+    var revealAll = function () {
+      reveals.forEach(function (el) { el.classList.add('is-visible'); });
+    };
+    if (!('IntersectionObserver' in window) || !reveals.length) {
+      revealAll();
+    } else {
+      var io = new IntersectionObserver(function (entries, obs) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            obs.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+      reveals.forEach(function (el) { io.observe(el); });
+      // Safety net: never leave content hidden if the observer misbehaves.
+      setTimeout(revealAll, 2000);
+    }
+  }
 })();

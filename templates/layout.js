@@ -92,6 +92,8 @@ export function head(content, opts = {}) {
       } catch (e) {
         document.documentElement.setAttribute('data-theme', 'light');
       }
+      // Enable scroll-triggered reveals (hides .reveal until JS reveals them).
+      document.documentElement.classList.add('reveal-on');
     })();
   </script>
 

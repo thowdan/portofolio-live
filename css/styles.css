@@ -176,6 +176,20 @@ img {
 .reveal {
   animation: reveal 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
+/* Scroll-triggered variant: when JS adds .reveal-on to <html>, elements start
+   hidden and animate in (via .is-visible) as they enter the viewport. */
+html.reveal-on .reveal {
+  animation: none;
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1),
+              transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+html.reveal-on .reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
 
 /* ---------- Shared atoms --------------------------------------------------- */
 .eyebrow {
@@ -209,6 +223,12 @@ img {
   background: var(--chip);
   border: 1px solid var(--border);
   color: var(--text-soft);
+  transition: transform 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+.chip:hover {
+  transform: translateY(-1px);
+  border-color: var(--accent-border);
+  color: var(--text);
 }
 .chip-link {
   font-size: 13px;
@@ -323,15 +343,32 @@ img {
   gap: 8px;
 }
 .nav-link {
+  position: relative;
   padding: 8px 14px;
   font-size: 14px;
   color: var(--text-mut);
   border-radius: 10px;
   transition: color 0.25s ease, background 0.25s ease;
 }
+.nav-link::after {
+  content: '';
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 4px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.25s ease;
+}
 .nav-link:hover {
   color: var(--text);
   background: var(--chip);
+}
+.nav-link:hover::after {
+  transform: scaleX(1);
 }
 .theme-toggle {
   display: flex;
@@ -409,9 +446,9 @@ main {
   gap: 64px;
   align-items: center;
 }
-.hero-copy .reveal:nth-child(2) { animation-delay: 80ms; }
-.hero-copy .reveal:nth-child(3) { animation-delay: 160ms; }
-.hero-copy .reveal:nth-child(4) { animation-delay: 240ms; }
+.hero-copy .reveal:nth-child(2) { animation-delay: 80ms; --reveal-delay: 80ms; }
+.hero-copy .reveal:nth-child(3) { animation-delay: 160ms; --reveal-delay: 160ms; }
+.hero-copy .reveal:nth-child(4) { animation-delay: 240ms; --reveal-delay: 240ms; }
 .hero-title {
   margin: 0 0 22px;
   font-size: 64px;
@@ -434,6 +471,7 @@ main {
 .hero-photo-wrap {
   position: relative;
   animation-delay: 160ms;
+  --reveal-delay: 160ms;
 }
 .hero-photo-glow {
   position: absolute;
@@ -452,6 +490,10 @@ main {
   display: block;
   width: 100%;
   height: auto;
+  transition: transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.hero-photo:hover img {
+  transform: scale(1.04);
 }
 .hero-photo-card {
   position: absolute;
@@ -502,6 +544,11 @@ main {
   background: var(--surface);
   -webkit-backdrop-filter: blur(18px) saturate(180%);
   backdrop-filter: blur(18px) saturate(180%);
+  transition: transform 0.3s cubic-bezier(0.2, 0.7, 0.2, 1), background 0.3s ease;
+}
+.stat:hover {
+  transform: translateY(-3px);
+  background: var(--accent-soft);
 }
 .stat-value {
   font-size: 38px;
@@ -597,6 +644,12 @@ main {
 .project-link:hover {
   color: var(--accent-2);
 }
+.project-link i {
+  transition: transform 0.25s ease;
+}
+.project-link:hover i {
+  transform: translate(3px, -3px);
+}
 .project-meta {
   font-size: 13px;
   color: var(--text-faint);
@@ -617,6 +670,12 @@ main {
   -webkit-backdrop-filter: blur(18px) saturate(180%);
   backdrop-filter: blur(18px) saturate(180%);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.05), inset 0 1px 0 var(--inset);
+  transition: transform 0.3s cubic-bezier(0.2, 0.7, 0.2, 1), border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.skill-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--accent-border);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.09), inset 0 1px 0 var(--inset);
 }
 
 /* ---------- About ---------------------------------------------------------- */
@@ -655,6 +714,7 @@ main {
   flex-direction: column;
   gap: 18px;
   animation-delay: 120ms;
+  --reveal-delay: 120ms;
 }
 .side-card {
   border-radius: 22px;
@@ -713,6 +773,12 @@ main {
   -webkit-backdrop-filter: blur(16px) saturate(180%);
   backdrop-filter: blur(16px) saturate(180%);
   box-shadow: 0 10px 34px rgba(0, 0, 0, 0.05), inset 0 1px 0 var(--inset);
+  transition: transform 0.3s cubic-bezier(0.2, 0.7, 0.2, 1), border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.award:hover {
+  transform: translateY(-3px);
+  border-color: var(--accent-border);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.09), inset 0 1px 0 var(--inset);
 }
 .award-icon {
   flex: none;
@@ -726,6 +792,10 @@ main {
   border: 1px solid var(--accent-border);
   font-size: 16px;
   color: var(--accent);
+  transition: transform 0.3s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.award:hover .award-icon {
+  transform: scale(1.08);
 }
 .award-title {
   font-size: 16px;
@@ -1181,5 +1251,10 @@ main {
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
+  }
+  /* Never leave scroll-reveal content hidden when motion is reduced. */
+  html.reveal-on .reveal {
+    opacity: 1 !important;
+    transform: none !important;
   }
 }

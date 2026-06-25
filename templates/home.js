@@ -232,7 +232,7 @@ ${head(content, { path: '/' })}
     </section>
   </main>
 
-  <script src="/js/theme.js" defer></script>
+  <script src="/js/theme.js?v=2" defer></script>
 </body>
 </html>`;
 }
