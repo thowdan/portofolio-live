@@ -14,18 +14,8 @@ import {
   isAuthConfigured,
   refreshSession,
 } from '../lib/auth.js';
-import { isStoreConfigured, getAdminUser } from '../lib/store.js';
+import { isStoreConfigured, getAdminUser, hasAdminUsers } from '../lib/store.js';
 import { loginLimiter, allow, clientIp } from '../lib/ratelimit.js';
-
-// Verifies an email + password against the Neon `admin_users` table.
-// Returns true on a match. Throws if the DB is unreachable so the caller can
-// fall back to the env-password backup.
-async function dbLoginSucceeds(email, password) {
-  if (!email || !isStoreConfigured()) return false;
-  const user = await getAdminUser(email);
-  if (!user) return false;
-  return verifyPasswordHash(password, user.password_hash);
-}
 
 function parseBody(req) {
   if (req.body == null) return {};
@@ -62,25 +52,42 @@ export default async function handler(req, res) {
       return res.status(429).json({ error: 'Too many attempts. Please wait a minute and try again.' });
     }
     const { email, password } = parseBody(req);
+    const issue = () => {
+      res.setHeader('Set-Cookie', sessionCookie(createSessionToken()));
+      return res.status(200).json({ ok: true });
+    };
 
-    // Primary: email + password verified against Neon. A DB error (server down)
-    // is swallowed so we fall through to the env-password backup below.
-    if (email) {
+    // Determine DB state: is it reachable, and are any admin users configured?
+    const storeOn = isStoreConfigured();
+    let usersExist = false;
+    let dbDown = false;
+    if (storeOn) {
       try {
-        if (await dbLoginSucceeds(email, password)) {
-          res.setHeader('Set-Cookie', sessionCookie(createSessionToken()));
-          return res.status(200).json({ ok: true });
-        }
+        usersExist = await hasAdminUsers();
       } catch (err) {
-        console.error('[session] DB login check failed, using backup:', err?.message || err);
+        dbDown = true; // database unreachable
+        console.error('[session] DB unreachable, allowing backup:', err?.message || err);
       }
     }
 
-    // Backup: password-only against the ADMIN_PASSWORD env var.
-    if (passwordMatches(password)) {
-      res.setHeader('Set-Cookie', sessionCookie(createSessionToken()));
-      return res.status(200).json({ ok: true });
+    // Primary path — DB up AND a user is configured: ONLY email+password works.
+    if (storeOn && !dbDown && usersExist) {
+      try {
+        const user = email ? await getAdminUser(email) : null;
+        if (user && verifyPasswordHash(password, user.password_hash)) return issue();
+      } catch (err) {
+        dbDown = true; // lost the DB mid-request — fall through to backup
+        console.error('[session] DB login check failed, allowing backup:', err?.message || err);
+      }
     }
+
+    // Backup path — ONLY when the store is unconfigured, the DB is down, or no
+    // admin user exists yet (first-time bootstrap). The env password never works
+    // while the database is healthy and a user is configured.
+    if (!storeOn || dbDown || !usersExist) {
+      if (passwordMatches(password)) return issue();
+    }
+
     return res.status(401).json({ error: 'Incorrect email or password.' });
   }
 
