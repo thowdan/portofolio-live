@@ -1,18 +1,21 @@
-// Admin editor. Talks to /api/session (auth) and /api/content (load/save).
-// Content edits are held in a working `state` object and PUT to the server on save;
-// the server validates, stores, and the live (server-rendered) site reflects it.
+// Admin editor. Talks to /api/session (auth), /api/content (load/save) and
+// /api/resume (CV upload). Content edits are held in a working `state` object and
+// PUT to the server on save; the server validates, stores, and the live
+// (server-rendered) site reflects it.
 (function () {
   'use strict';
 
-  var state = null; // working copy of the content
-  var meta = {};
+  var state = null;      // working copy of the content
+  var meta = {};         // _meta from the content payload
+  var resumeMeta = {};   // { filename } for the uploaded CV, if any
+  var dirty = false;     // unsaved content changes?
 
   var $ = function (id) { return document.getElementById(id); };
   var els = {
     boot: $('boot'), login: $('login'), editor: $('editor'),
     loginForm: $('login-form'), password: $('password'),
     loginStatus: $('login-status'), loginNotice: $('login-notice'),
-    editorNotice: $('editor-notice'), form: $('form'),
+    editorNotice: $('editor-notice'), form: $('form'), nav: $('section-nav'),
     saveStatus: $('save-status'), save: $('save'), discard: $('discard'), logout: $('logout'),
   };
 
@@ -34,13 +37,24 @@
     return e;
   }
 
+  function markDirty() {
+    if (!dirty) {
+      dirty = true;
+      setStatus(els.saveStatus, 'Unsaved changes', 'warn');
+    }
+  }
+  function markClean(text) {
+    dirty = false;
+    setStatus(els.saveStatus, text || 'All changes saved.', text ? 'ok' : null);
+  }
+
   function field(label, value, on, opts) {
     opts = opts || {};
     var input = document.createElement(opts.textarea ? 'textarea' : 'input');
     if (!opts.textarea) input.type = opts.type || 'text';
     if (opts.placeholder) input.placeholder = opts.placeholder;
     input.value = value == null ? '' : value;
-    input.addEventListener('input', function () { on(input.value); });
+    input.addEventListener('input', function () { on(input.value); markDirty(); });
     var wrap = h('div', { class: 'field' });
     wrap.appendChild(h('label', null, label));
     if (opts.hint) wrap.appendChild(h('small', { class: 'muted' }, opts.hint));
@@ -81,13 +95,13 @@
         var wrap = h('div', { class: 'repeat-item' });
         var head = h('div', { class: 'repeat-item-head' },
           h('strong', null, (addLabel || 'Item') + ' ' + (i + 1)));
-        head.appendChild(removeBtn(function () { arr.splice(i, 1); render(); }));
+        head.appendChild(removeBtn(function () { arr.splice(i, 1); render(); markDirty(); }));
         wrap.appendChild(head);
         itemFields(item).forEach(function (f) { wrap.appendChild(f); });
         body.appendChild(wrap);
       });
       var add = h('button', { class: 'btn-soft', type: 'button' }, '+ Add ' + (addLabel || 'item'));
-      add.addEventListener('click', function () { arr.push(makeNew()); render(); });
+      add.addEventListener('click', function () { arr.push(makeNew()); render(); markDirty(); });
       body.appendChild(add);
     }
     render();
@@ -103,20 +117,103 @@
         var input = document.createElement(textarea ? 'textarea' : 'input');
         if (!textarea) input.type = 'text';
         input.value = val || '';
-        input.addEventListener('input', function () { arr[i] = input.value; });
+        input.addEventListener('input', function () { arr[i] = input.value; markDirty(); });
         var wrap = h('div', { class: 'repeat-item' });
         var fwrap = h('div', { class: 'field' });
         fwrap.appendChild(input);
         wrap.appendChild(fwrap);
-        wrap.appendChild(removeBtn(function () { arr.splice(i, 1); render(); }));
+        wrap.appendChild(removeBtn(function () { arr.splice(i, 1); render(); markDirty(); }));
         body.appendChild(wrap);
       });
       var add = h('button', { class: 'btn-soft', type: 'button' }, '+ Add ' + (addLabel || 'item'));
-      add.addEventListener('click', function () { arr.push(''); render(); });
+      add.addEventListener('click', function () { arr.push(''); render(); markDirty(); });
       body.appendChild(add);
     }
     render();
     return card(title, body);
+  }
+
+  // ---- résumé / CV uploader ------------------------------------------------
+  function resumeCard() {
+    var id = state.identity;
+    var current = h('div', { class: 'resume-current' });
+
+    function renderCurrent() {
+      current.innerHTML = '';
+      if (id.resumeUrl) {
+        current.appendChild(h('span', { class: 'resume-name' },
+          h('i', { class: 'fa-solid fa-file-pdf', 'aria-hidden': 'true' }),
+          ' ' + (resumeMeta.filename || 'Résumé set')));
+        current.appendChild(h('a', { class: 'btn-soft', href: id.resumeUrl, target: '_blank', rel: 'noopener' }, 'View'));
+        var rm = h('button', { class: 'btn-soft btn-danger', type: 'button' }, 'Remove');
+        rm.addEventListener('click', removeResume);
+        current.appendChild(rm);
+      } else {
+        current.appendChild(h('span', { class: 'muted' }, 'No résumé uploaded yet.'));
+      }
+    }
+
+    function uploadResume(fileObj) {
+      if (!fileObj) return;
+      if (fileObj.type && fileObj.type !== 'application/pdf') {
+        setStatus(els.saveStatus, 'Please choose a PDF file.', 'err'); return;
+      }
+      if (fileObj.size > 3 * 1024 * 1024) {
+        setStatus(els.saveStatus, 'That PDF is over 3 MB — please use a smaller file.', 'err'); return;
+      }
+      setStatus(els.saveStatus, 'Uploading résumé…');
+      var reader = new FileReader();
+      reader.onload = function () {
+        api('/api/resume', { method: 'PUT', body: JSON.stringify({ filename: fileObj.name, data: reader.result }) })
+          .then(function (r) {
+            if (!r.ok) { setStatus(els.saveStatus, r.body.error || 'Upload failed.', 'err'); return; }
+            id.resumeUrl = r.body.url || '/api/resume';
+            resumeMeta = { filename: r.body.filename };
+            renderCurrent();
+            // Persist resumeUrl into the content so the public site links to it.
+            saveContent('Résumé uploaded & published ✓');
+          });
+      };
+      reader.onerror = function () { setStatus(els.saveStatus, 'Could not read that file.', 'err'); };
+      reader.readAsDataURL(fileObj);
+    }
+
+    function removeResume() {
+      if (!window.confirm('Remove the uploaded résumé?')) return;
+      setStatus(els.saveStatus, 'Removing résumé…');
+      api('/api/resume', { method: 'DELETE' }).then(function (r) {
+        if (!r.ok) { setStatus(els.saveStatus, r.body.error || 'Could not remove.', 'err'); return; }
+        id.resumeUrl = '';
+        resumeMeta = {};
+        renderCurrent();
+        saveContent('Résumé removed ✓');
+      });
+    }
+
+    var fileInput = h('input', { type: 'file', accept: 'application/pdf,.pdf', id: 'resume-file' });
+    fileInput.addEventListener('change', function () {
+      uploadResume(fileInput.files && fileInput.files[0]);
+      fileInput.value = '';
+    });
+    var pick = h('label', { class: 'btn-soft', 'for': 'resume-file' },
+      h('i', { class: 'fa-solid fa-arrow-up-from-bracket', 'aria-hidden': 'true' }), ' Upload PDF');
+
+    var uploadRow = h('div', { class: 'resume-upload' }, pick, fileInput);
+    var hint = h('small', { class: 'muted' },
+      'Upload a PDF (max 3 MB). It is stored in your database and served at /api/resume. The Résumé button on your site appears automatically once one is set.');
+
+    renderCurrent();
+
+    var c = card('Résumé / CV', current, uploadRow, hint);
+
+    // Advanced: link to an external résumé URL instead of an uploaded file.
+    c.appendChild(field('Or link to an external URL (optional)', id.resumeUrl, function (v) {
+      id.resumeUrl = v;
+      resumeMeta = {};
+      renderCurrent();
+    }, { hint: 'Overrides the upload. Leave blank to use the uploaded PDF.' }));
+
+    return c;
   }
 
   // ---- build the full form -------------------------------------------------
@@ -160,10 +257,11 @@
       ),
       row(
         field('Location', id.location, function (v) { id.location = v; }),
-        field('Résumé URL', id.resumeUrl, function (v) { id.resumeUrl = v; })
-      ),
-      field('Photo path', id.photo, function (v) { id.photo = v; })
+        field('Photo path', id.photo, function (v) { id.photo = v; })
+      )
     ));
+
+    f.appendChild(resumeCard());
 
     f.appendChild(listCard('Stats', state.stats, function (item) {
       return [row(
@@ -228,6 +326,26 @@
       field('Heading', ct.heading, function (v) { ct.heading = v; }),
       field('Subtitle', ct.sub, function (v) { ct.sub = v; }, { textarea: true })
     ));
+
+    buildNav();
+  }
+
+  // Builds the sticky quick-jump nav from the section cards.
+  function buildNav() {
+    els.nav.innerHTML = '';
+    var cards = els.form.querySelectorAll('.admin-card');
+    cards.forEach(function (cardEl, i) {
+      var heading = cardEl.querySelector('h2');
+      if (!heading) return;
+      var id = 'sec-' + i;
+      cardEl.id = id;
+      var chip = h('a', { class: 'admin-nav-chip', href: '#' + id }, heading.textContent);
+      chip.addEventListener('click', function (e) {
+        e.preventDefault();
+        cardEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+      els.nav.appendChild(chip);
+    });
   }
 
   // ---- networking ----------------------------------------------------------
@@ -267,7 +385,7 @@
         els.password.disabled = true;
         els.loginForm.querySelector('button').disabled = true;
         notice(els.loginNotice,
-          'Admin login is not set up yet. Add an ADMIN_PASSWORD environment variable in your Vercel project (and the Upstash storage variables) to enable editing. See README.md.',
+          'Admin login is not set up yet. Add an ADMIN_PASSWORD environment variable in your Vercel project (and DATABASE_URL for storage) to enable editing. See README.md.',
           'warn');
         return;
       }
@@ -275,7 +393,7 @@
       show('login');
       if (!st.storeConfigured) {
         notice(els.loginNotice,
-          'Heads up: the storage backend is not configured, so saving will not persist yet. Add the Upstash variables (see README) to enable publishing.',
+          'Heads up: the storage backend is not configured, so saving will not persist yet. Add the Neon DATABASE_URL variable (see README) to enable publishing.',
           'warn');
       }
     }).catch(function () {
@@ -292,14 +410,35 @@
       state = r.body;
       buildForm();
       show('editor');
+      dirty = false;
       if (!meta.storeConfigured) {
         notice(els.editorNotice,
-          'Storage backend not configured — you can edit here, but Save will not persist until you add the Upstash variables (see README).',
+          'Storage backend not configured — you can edit here, but Save will not persist until you add the Neon DATABASE_URL variable (see README).',
           'warn');
       } else {
         notice(els.editorNotice, '');
       }
       setStatus(els.saveStatus, meta.updatedAt ? 'Last saved ' + new Date(meta.updatedAt).toLocaleString() : 'Loaded.');
+      // Fetch the current résumé filename for the uploader display.
+      api('/api/resume?meta=1').then(function (rr) {
+        if (rr.ok && rr.body.exists) { resumeMeta = { filename: rr.body.filename }; buildForm(); dirty = false; }
+      });
+    });
+  }
+
+  // Saves the working content to the server. `okText` customises the success line.
+  function saveContent(okText) {
+    if (!okText) setStatus(els.saveStatus, 'Saving…');
+    return api('/api/content', { method: 'PUT', body: JSON.stringify(state) }).then(function (r) {
+      if (r.ok) {
+        markClean(okText || 'Saved & published ✓ — changes are live within ~30s.');
+      } else if (r.status === 401) {
+        setStatus(els.saveStatus, 'Session expired — please log in again.', 'err');
+        show('login');
+      } else {
+        setStatus(els.saveStatus, r.body.error || 'Save failed.', 'err');
+      }
+      return r;
     });
   }
 
@@ -313,31 +452,34 @@
       });
   });
 
-  els.save.addEventListener('click', function () {
-    setStatus(els.saveStatus, 'Saving…');
-    api('/api/content', { method: 'PUT', body: JSON.stringify(state) }).then(function (r) {
-      if (r.ok) {
-        setStatus(els.saveStatus, 'Saved & published ✓ — changes are live within ~30s.', 'ok');
-      } else if (r.status === 401) {
-        setStatus(els.saveStatus, 'Session expired — please log in again.', 'err');
-        show('login');
-      } else {
-        setStatus(els.saveStatus, r.body.error || 'Save failed.', 'err');
-      }
-    });
-  });
+  els.save.addEventListener('click', function () { saveContent(); });
 
   els.discard.addEventListener('click', function () {
+    if (dirty && !window.confirm('Discard your unsaved changes?')) return;
     setStatus(els.saveStatus, 'Reloading…');
     loadContent();
   });
 
   els.logout.addEventListener('click', function () {
+    if (dirty && !window.confirm('You have unsaved changes. Log out anyway?')) return;
     api('/api/session', { method: 'DELETE' }).then(function () {
       state = null;
+      dirty = false;
       notice(els.loginNotice, '');
       show('login');
     });
+  });
+
+  // ⌘/Ctrl+S saves without leaving the page.
+  document.addEventListener('keydown', function (e) {
+    if ((e.metaKey || e.ctrlKey) && (e.key === 's' || e.key === 'S')) {
+      if (!els.editor.classList.contains('hidden')) { e.preventDefault(); saveContent(); }
+    }
+  });
+
+  // Warn before navigating away with unsaved changes.
+  window.addEventListener('beforeunload', function (e) {
+    if (dirty) { e.preventDefault(); e.returnValue = ''; }
   });
 
   boot();

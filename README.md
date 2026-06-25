@@ -17,8 +17,10 @@ publish it live — no redeploy needed. Built to deploy on **Vercel**.
   instant page. When you edit content in the admin, the homepage reflects it within
   ~30 seconds (edge cache TTL).
 - **Content** lives in `lib/content.js` as `DEFAULT_CONTENT`. The admin saves
-  overrides into an **Upstash Redis** store; the defaults are always the fallback,
+  overrides into a **Neon Postgres** store; the defaults are always the fallback,
   so the public site renders even with **zero** backend configuration.
+- **Résumé / CV** can be uploaded from the admin. The PDF is stored in Neon and
+  served at `/api/resume`; the Résumé buttons appear automatically once one is set.
 - **Admin (`/admin`)** is a form editor. It authenticates against `ADMIN_PASSWORD`,
   gets an HMAC-signed httpOnly session cookie, and `PUT`s validated content to the
   API.
@@ -30,12 +32,13 @@ publish it live — no redeploy needed. Built to deploy on **Vercel**.
 api/
   home.js        # GET / → server-rendered homepage (edge-cached)
   content.js     # GET (public) + PUT (admin) content
+  resume.js      # GET (public) PDF + PUT/DELETE (admin) CV upload
   session.js     # login / logout / status
 lib/
   content.js     # DEFAULT_CONTENT, get/save, validation (edit your data here)
-  store.js       # Upstash Redis with graceful fallback
+  store.js       # Neon Postgres (kv + files tables) with graceful fallback
   auth.js        # signed-cookie sessions, timing-safe password check
-  ratelimit.js   # API rate limiting (Upstash) with no-op fallback
+  ratelimit.js   # API rate limiting (Neon-backed) with no-op fallback
 templates/
   layout.js      # <head> + SEO meta/OG/Twitter/JSON-LD + HTML escaping
   home.js        # homepage HTML
@@ -66,8 +69,7 @@ Copy `.env.example`. None are required for the public site; these enable the adm
 | --- | --- | --- |
 | `ADMIN_PASSWORD` | Admin login | Your login password. |
 | `SESSION_SECRET` | Session signing | Recommended. `openssl rand -base64 32`. |
-| `UPSTASH_REDIS_REST_URL` | Saving content | From the Upstash console → REST API. |
-| `UPSTASH_REDIS_REST_TOKEN` | Saving content | From the Upstash console → REST API. |
+| `DATABASE_URL` | Saving content & CV | Neon Postgres pooled connection string. |
 
 Set them in **Vercel → Project → Settings → Environment Variables**, then redeploy.
 
@@ -75,18 +77,19 @@ Set them in **Vercel → Project → Settings → Environment Variables**, then 
 
 1. Push this repo to GitHub and **Import** it in Vercel (framework preset: *Other*).
 2. Add the environment variables above.
-3. Create a free database at <https://console.upstash.com> (Redis) and paste its
-   REST URL + token into the env vars.
+3. Create a free database at <https://console.neon.tech> (Postgres) and paste its
+   pooled connection string into `DATABASE_URL`. Tables (`kv`, `files`,
+   `rate_limits`) are created automatically on first use — no migration step.
 4. Deploy. Visit `/admin`, log in with `ADMIN_PASSWORD`, edit, and **Save & publish**.
 
 ## Going-live checklist
 
 - [x] Domain is set to `https://thowdanaleryani.vercel.app` in `lib/content.js`,
       `robots.txt`, and `sitemap.xml`. Change those 3 spots if you ever move domains.
-- [ ] Add `ADMIN_PASSWORD`, `SESSION_SECRET`, and the Upstash vars in Vercel
+- [ ] Add `ADMIN_PASSWORD`, `SESSION_SECRET`, and `DATABASE_URL` in Vercel
       (see the table above), then redeploy — required for the `/admin` editor.
-- [ ] (Optional) Add a `resume.pdf` and set the Résumé URL in `/admin`. Until then
-      the Résumé buttons are hidden automatically, so there's no broken link.
+- [ ] (Optional) Upload your CV in `/admin` (Résumé / CV section). Until then the
+      Résumé buttons are hidden automatically, so there's no broken link.
 - [ ] (Optional) Replace `myjpg.jpg` with your preferred photo / social-share image.
 
 ## SEO
@@ -106,10 +109,10 @@ while reflecting content edits within ~30s. API writes are `no-store`.
 
 ## Rate limiting & security
 
-- The API is rate-limited per IP via Upstash (`lib/ratelimit.js`): admin login is
+- The API is rate-limited per IP via Neon (`lib/ratelimit.js`): admin login is
   capped at 5/min to deter brute force, content writes at 20/min, public reads at
-  120/min. Without Upstash these become no-ops (so local dev still works) — configure
-  Upstash in production to make them effective.
+  120/min. Without `DATABASE_URL` these become no-ops (so local dev still works) —
+  configure Neon in production to make them effective.
 - Admin sessions use HMAC-signed, httpOnly, Secure, SameSite cookies; the password
   check is constant-time.
 - Security headers (CSP, HSTS, `X-Content-Type-Options`, `X-Frame-Options`,
