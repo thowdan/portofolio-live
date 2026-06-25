@@ -7,6 +7,8 @@
 import {
   passwordMatches,
   verifyPasswordHash,
+  needsRehash,
+  hashPassword,
   createSessionToken,
   sessionCookie,
   clearCookie,
@@ -14,7 +16,7 @@ import {
   isAuthConfigured,
   refreshSession,
 } from '../lib/auth.js';
-import { isStoreConfigured, getAdminUser, hasAdminUsers } from '../lib/store.js';
+import { isStoreConfigured, getAdminUser, hasAdminUsers, upsertAdminUser } from '../lib/store.js';
 import { loginLimiter, allow, clientIp } from '../lib/ratelimit.js';
 
 function parseBody(req) {
@@ -74,7 +76,17 @@ export default async function handler(req, res) {
     if (storeOn && !dbDown && usersExist) {
       try {
         const user = email ? await getAdminUser(email) : null;
-        if (user && verifyPasswordHash(password, user.password_hash)) return issue();
+        if (user && verifyPasswordHash(password, user.password_hash)) {
+          // Heal legacy/plaintext credentials by re-storing a secure hash.
+          if (needsRehash(user.password_hash)) {
+            try {
+              await upsertAdminUser(email, hashPassword(password));
+            } catch (e) {
+              console.error('[session] password rehash failed (non-fatal):', e?.message || e);
+            }
+          }
+          return issue();
+        }
       } catch (err) {
         dbDown = true; // lost the DB mid-request — fall through to backup
         console.error('[session] DB login check failed, allowing backup:', err?.message || err);
