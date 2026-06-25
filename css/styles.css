@@ -544,22 +544,28 @@ main {
   background: var(--surface);
   -webkit-backdrop-filter: blur(18px) saturate(180%);
   backdrop-filter: blur(18px) saturate(180%);
-  transition: transform 0.3s cubic-bezier(0.2, 0.7, 0.2, 1), background 0.3s ease;
-}
-.stat:hover {
-  transform: translateY(-3px);
-  background: var(--accent-soft);
 }
 .stat-value {
   font-size: 38px;
   font-weight: 600;
   letter-spacing: -0.02em;
   color: var(--accent);
+  transform-origin: left center;
+  transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.stat:hover .stat-value {
+  transform: scale(1.12);
 }
 .stat-label {
   font-size: 14px;
   color: var(--text-mut);
   margin-top: 6px;
+  transform-origin: left center;
+  transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1), color 0.35s ease;
+}
+.stat:hover .stat-label {
+  transform: scale(1.04);
+  color: var(--text-soft);
 }
 
 /* ---------- Projects ------------------------------------------------------- */
