@@ -440,7 +440,15 @@
           'warn');
         return;
       }
-      if (st.authenticated) { loadContent(); return; }
+      if (st.authenticated) {
+        // Security: never auto-resume into the editor on page load/refresh —
+        // tear down the surviving session and require a fresh login.
+        api('/api/session', { method: 'DELETE' }).then(function () {
+          show('login');
+          notice(els.loginNotice, 'You were logged out. Please log in again.');
+        });
+        return;
+      }
       show('login');
       if (!st.storeConfigured) {
         notice(els.loginNotice,
