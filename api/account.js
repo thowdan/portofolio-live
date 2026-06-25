@@ -3,7 +3,7 @@
 //   PUT /api/account → set { email, password }; stores a hashed credential in Neon.
 // Both require an authenticated admin session.
 
-import { isAuthenticated, hashPassword } from '../lib/auth.js';
+import { isAuthenticated, hashPassword, refreshSession } from '../lib/auth.js';
 import { getPrimaryAdminEmail, upsertAdminUser, StoreNotConfiguredError } from '../lib/store.js';
 import { writeLimiter, allow, clientIp } from '../lib/ratelimit.js';
 
@@ -30,6 +30,7 @@ export default async function handler(req, res) {
   if (!isAuthenticated(req)) {
     return res.status(401).json({ error: 'Not authenticated. Please log in.' });
   }
+  refreshSession(req, res); // sliding session
 
   if (req.method === 'GET') {
     const email = await getPrimaryAdminEmail();

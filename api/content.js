@@ -3,7 +3,7 @@
 //   PUT  /api/content  → admin only, validates + saves overrides (rate limited).
 
 import { getContent, saveContent } from '../lib/content.js';
-import { isAuthenticated } from '../lib/auth.js';
+import { isAuthenticated, refreshSession } from '../lib/auth.js';
 import { writeLimiter, readLimiter, allow, clientIp } from '../lib/ratelimit.js';
 import { StoreNotConfiguredError } from '../lib/store.js';
 
@@ -36,6 +36,7 @@ export default async function handler(req, res) {
     if (!isAuthenticated(req)) {
       return res.status(401).json({ error: 'Not authenticated. Please log in.' });
     }
+    refreshSession(req, res); // sliding session
     if (!(await allow(writeLimiter, clientIp(req), res))) {
       return res.status(429).json({ error: 'Too many writes. Try again shortly.' });
     }

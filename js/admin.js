@@ -533,5 +533,17 @@
     if (dirty) { e.preventDefault(); e.returnValue = ''; }
   });
 
+  // Keep the session alive while the editor is open. Each ping triggers the
+  // server's sliding refresh; if the session has genuinely expired, return to login.
+  setInterval(function () {
+    if (els.editor.classList.contains('hidden')) return;
+    api('/api/session').then(function (r) {
+      if (r.ok && r.body && r.body.authenticated === false) {
+        setStatus(els.saveStatus, 'Session expired — please log in again.', 'err');
+        show('login');
+      }
+    });
+  }, 5 * 60 * 1000);
+
   boot();
 })();

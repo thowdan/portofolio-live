@@ -12,6 +12,7 @@ import {
   clearCookie,
   isAuthenticated,
   isAuthConfigured,
+  refreshSession,
 } from '../lib/auth.js';
 import { isStoreConfigured, getAdminUser } from '../lib/store.js';
 import { loginLimiter, allow, clientIp } from '../lib/ratelimit.js';
@@ -42,8 +43,10 @@ export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
 
   if (req.method === 'GET') {
+    // Sliding session: keep the cookie alive while the editor polls this.
+    const authed = refreshSession(req, res);
     return res.status(200).json({
-      authenticated: isAuthenticated(req),
+      authenticated: authed,
       adminConfigured: isAuthConfigured(),
       storeConfigured: isStoreConfigured(),
     });

@@ -5,7 +5,7 @@
 //   DELETE /api/resume        → admin only, removes the stored PDF.
 
 import { getFile, getFileMeta, putFile, deleteFile, StoreNotConfiguredError } from '../lib/store.js';
-import { isAuthenticated } from '../lib/auth.js';
+import { isAuthenticated, refreshSession } from '../lib/auth.js';
 import { writeLimiter, readLimiter, allow, clientIp } from '../lib/ratelimit.js';
 
 const KEY = 'resume';
@@ -65,6 +65,7 @@ export default async function handler(req, res) {
     if (!isAuthenticated(req)) {
       return res.status(401).json({ error: 'Not authenticated. Please log in.' });
     }
+    refreshSession(req, res); // sliding session
     if (!(await allow(writeLimiter, clientIp(req), res))) {
       return res.status(429).json({ error: 'Too many uploads. Try again shortly.' });
     }
@@ -105,6 +106,7 @@ export default async function handler(req, res) {
     if (!isAuthenticated(req)) {
       return res.status(401).json({ error: 'Not authenticated. Please log in.' });
     }
+    refreshSession(req, res); // sliding session
     try {
       await deleteFile(KEY);
       return res.status(200).json({ ok: true });
