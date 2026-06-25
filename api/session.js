@@ -1,18 +1,30 @@
 // Admin session API.
 //   GET    /api/session → status: { authenticated, storeConfigured, adminConfigured }
-//   POST   /api/session → log in with { password }; sets an httpOnly session cookie.
+//   POST   /api/session → log in with { email, password } (Neon) or { password }
+//                         (env backup); sets an httpOnly session cookie.
 //   DELETE /api/session → log out; clears the cookie.
 
 import {
   passwordMatches,
+  verifyPasswordHash,
   createSessionToken,
   sessionCookie,
   clearCookie,
   isAuthenticated,
   isAuthConfigured,
 } from '../lib/auth.js';
-import { isStoreConfigured } from '../lib/store.js';
+import { isStoreConfigured, getAdminUser } from '../lib/store.js';
 import { loginLimiter, allow, clientIp } from '../lib/ratelimit.js';
+
+// Verifies an email + password against the Neon `admin_users` table.
+// Returns true on a match. Throws if the DB is unreachable so the caller can
+// fall back to the env-password backup.
+async function dbLoginSucceeds(email, password) {
+  if (!email || !isStoreConfigured()) return false;
+  const user = await getAdminUser(email);
+  if (!user) return false;
+  return verifyPasswordHash(password, user.password_hash);
+}
 
 function parseBody(req) {
   if (req.body == null) return {};
@@ -46,12 +58,27 @@ export default async function handler(req, res) {
     if (!(await allow(loginLimiter, clientIp(req), res))) {
       return res.status(429).json({ error: 'Too many attempts. Please wait a minute and try again.' });
     }
-    const { password } = parseBody(req);
+    const { email, password } = parseBody(req);
+
+    // Primary: email + password verified against Neon. A DB error (server down)
+    // is swallowed so we fall through to the env-password backup below.
+    if (email) {
+      try {
+        if (await dbLoginSucceeds(email, password)) {
+          res.setHeader('Set-Cookie', sessionCookie(createSessionToken()));
+          return res.status(200).json({ ok: true });
+        }
+      } catch (err) {
+        console.error('[session] DB login check failed, using backup:', err?.message || err);
+      }
+    }
+
+    // Backup: password-only against the ADMIN_PASSWORD env var.
     if (passwordMatches(password)) {
       res.setHeader('Set-Cookie', sessionCookie(createSessionToken()));
       return res.status(200).json({ ok: true });
     }
-    return res.status(401).json({ error: 'Incorrect password.' });
+    return res.status(401).json({ error: 'Incorrect email or password.' });
   }
 
   if (req.method === 'DELETE') {

@@ -21,9 +21,11 @@ publish it live — no redeploy needed. Built to deploy on **Vercel**.
   so the public site renders even with **zero** backend configuration.
 - **Résumé / CV** can be uploaded from the admin. The PDF is stored in Neon and
   served at `/api/resume`; the Résumé buttons appear automatically once one is set.
-- **Admin (`/admin`)** is a form editor. It authenticates against `ADMIN_PASSWORD`,
-  gets an HMAC-signed httpOnly session cookie, and `PUT`s validated content to the
-  API.
+- **Admin (`/admin`)** is a form editor with collapsible sections. Login is by
+  **email + password stored in Neon** (set it in the admin's *Account & login*
+  section); `ADMIN_PASSWORD` is a **backup** used if the database is unreachable.
+  A successful login gets an HMAC-signed httpOnly session cookie, and the editor
+  `PUT`s validated content to the API.
 - **Error pages** (`404.html`, `403.html`, `500.html`) are plain static files.
 
 ## Project structure
@@ -33,6 +35,7 @@ api/
   home.js        # GET / → server-rendered homepage (edge-cached)
   content.js     # GET (public) + PUT (admin) content
   resume.js      # GET (public) PDF + PUT/DELETE (admin) CV upload
+  account.js     # GET/PUT (admin) email + password credentials (Neon)
   session.js     # login / logout / status
 lib/
   content.js     # DEFAULT_CONTENT, get/save, validation (edit your data here)
@@ -67,7 +70,7 @@ Copy `.env.example`. None are required for the public site; these enable the adm
 
 | Variable | Required for | Notes |
 | --- | --- | --- |
-| `ADMIN_PASSWORD` | Admin login | Your login password. |
+| `ADMIN_PASSWORD` | Admin login (backup) | Fallback password if Neon is down. Primary login (email+password) is set in the admin and stored in Neon. |
 | `SESSION_SECRET` | Session signing | Recommended. `openssl rand -base64 32`. |
 | `DATABASE_URL` | Saving content & CV | Neon Postgres pooled connection string. |
 
@@ -79,7 +82,8 @@ Set them in **Vercel → Project → Settings → Environment Variables**, then 
 2. Add the environment variables above.
 3. Create a free database at <https://console.neon.tech> (Postgres) and paste its
    pooled connection string into `DATABASE_URL`. Tables (`kv`, `files`,
-   `rate_limits`) are created automatically on first use — no migration step.
+   `rate_limits`, `admin_users`) are created automatically on first use — no
+   migration step.
 4. Deploy. Visit `/admin`, log in with `ADMIN_PASSWORD`, edit, and **Save & publish**.
 
 ## Going-live checklist

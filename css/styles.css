@@ -1035,6 +1035,37 @@ main {
 .admin-status.err { color: #ff453a; }
 .admin-status.warn { color: #d98324; font-weight: 600; }
 
+/* Collapsible section cards */
+.admin-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  background: none;
+  border: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.admin-card-head h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+.card-chevron {
+  flex: 0 0 auto;
+  font-size: 13px;
+  color: var(--text-mut);
+  transition: transform 0.2s ease;
+}
+.admin-card.collapsed .card-chevron { transform: rotate(-90deg); }
+.admin-card-body { margin-top: 16px; }
+.admin-card.collapsed .admin-card-body { display: none; }
+
 /* Sticky quick-jump section nav */
 .admin-nav {
   position: sticky;

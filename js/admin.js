@@ -13,7 +13,7 @@
   var $ = function (id) { return document.getElementById(id); };
   var els = {
     boot: $('boot'), login: $('login'), editor: $('editor'),
-    loginForm: $('login-form'), password: $('password'),
+    loginForm: $('login-form'), email: $('email'), password: $('password'),
     loginStatus: $('login-status'), loginNotice: $('login-notice'),
     editorNotice: $('editor-notice'), form: $('form'), nav: $('section-nav'),
     saveStatus: $('save-status'), save: $('save'), discard: $('discard'), logout: $('logout'),
@@ -74,9 +74,18 @@
     }, { hint: hint });
   }
 
+  // A collapsible section card. The header toggles a `.collapsed` class; bodies
+  // start collapsed so the editor is tidy and scannable.
   function card(title) {
-    var c = h('div', { class: 'admin-card' }, h('h2', null, title));
-    for (var i = 1; i < arguments.length; i++) if (arguments[i]) c.appendChild(arguments[i]);
+    var c = h('div', { class: 'admin-card collapsed' });
+    var head = h('button', { type: 'button', class: 'admin-card-head' },
+      h('h2', null, title),
+      h('i', { class: 'fa-solid fa-chevron-down card-chevron', 'aria-hidden': 'true' }));
+    head.addEventListener('click', function () { c.classList.toggle('collapsed'); });
+    c.appendChild(head);
+    var body = h('div', { class: 'admin-card-body' });
+    for (var i = 1; i < arguments.length; i++) if (arguments[i]) body.appendChild(arguments[i]);
+    c.appendChild(body);
     return c;
   }
 
@@ -195,25 +204,64 @@
       uploadResume(fileInput.files && fileInput.files[0]);
       fileInput.value = '';
     });
-    var pick = h('label', { class: 'btn-soft', 'for': 'resume-file' },
-      h('i', { class: 'fa-solid fa-arrow-up-from-bracket', 'aria-hidden': 'true' }), ' Upload PDF');
+    var pick = h('label', { class: 'btn btn-accent btn-sm', 'for': 'resume-file' },
+      h('i', { class: 'fa-solid fa-arrow-up-from-bracket', 'aria-hidden': 'true' }), ' Upload CV (PDF)');
 
     var uploadRow = h('div', { class: 'resume-upload' }, pick, fileInput);
     var hint = h('small', { class: 'muted' },
       'Upload a PDF (max 3 MB). It is stored in your database and served at /api/resume. The Résumé button on your site appears automatically once one is set.');
 
-    renderCurrent();
-
-    var c = card('Résumé / CV', current, uploadRow, hint);
-
     // Advanced: link to an external résumé URL instead of an uploaded file.
-    c.appendChild(field('Or link to an external URL (optional)', id.resumeUrl, function (v) {
+    var urlField = field('Or link to an external URL (optional)', id.resumeUrl, function (v) {
       id.resumeUrl = v;
       resumeMeta = {};
       renderCurrent();
-    }, { hint: 'Overrides the upload. Leave blank to use the uploaded PDF.' }));
+    }, { hint: 'Overrides the upload. Leave blank to use the uploaded PDF.' });
 
-    return c;
+    renderCurrent();
+    return card('Résumé / CV', current, uploadRow, hint, urlField);
+  }
+
+  // ---- account & login (email + password stored in Neon) -------------------
+  function accountCard() {
+    var emailInput = h('input', { type: 'email', autocomplete: 'username', placeholder: 'you@example.com' });
+    var pwInput = h('input', { type: 'password', autocomplete: 'new-password', placeholder: 'At least 8 characters' });
+    var accStatus = h('span', { class: 'admin-status' });
+
+    // These fields are separate from the content model — typing here must NOT
+    // flag the content as dirty.
+    var emailField = h('div', { class: 'field' }, h('label', null, 'Login email'), emailInput);
+    var pwField = h('div', { class: 'field' },
+      h('label', null, 'New password'),
+      h('small', { class: 'muted' }, 'Sets the password you log in with. Stored hashed in your database.'),
+      pwInput);
+
+    var saveBtn = h('button', { class: 'btn btn-accent btn-sm', type: 'button' }, 'Save login credentials');
+    saveBtn.addEventListener('click', function () {
+      var email = emailInput.value.trim();
+      var pw = pwInput.value;
+      if (!email) { setStatus(accStatus, 'Enter an email address.', 'err'); return; }
+      if (pw.length < 8) { setStatus(accStatus, 'Password must be at least 8 characters.', 'err'); return; }
+      setStatus(accStatus, 'Saving…');
+      api('/api/account', { method: 'PUT', body: JSON.stringify({ email: email, password: pw }) }).then(function (r) {
+        if (r.ok) {
+          pwInput.value = '';
+          setStatus(accStatus, 'Saved ✓ — log in with this email & password next time.', 'ok');
+        } else {
+          setStatus(accStatus, r.body.error || 'Could not save.', 'err');
+        }
+      });
+    });
+
+    var note = h('div', { class: 'notice' },
+      'Set an email + password to log in with. The ' +
+      'ADMIN_PASSWORD is kept as a backup if the database is ever unreachable.');
+
+    // Prefill the current email.
+    api('/api/account').then(function (r) { if (r.ok && r.body.email) emailInput.value = r.body.email; });
+
+    return card('Account & login', note, emailField, pwField,
+      h('div', { class: 'btn-row' }, saveBtn, accStatus));
   }
 
   // ---- build the full form -------------------------------------------------
@@ -327,6 +375,8 @@
       field('Subtitle', ct.sub, function (v) { ct.sub = v; }, { textarea: true })
     ));
 
+    f.appendChild(accountCard());
+
     buildNav();
   }
 
@@ -342,6 +392,7 @@
       var chip = h('a', { class: 'admin-nav-chip', href: '#' + id }, heading.textContent);
       chip.addEventListener('click', function (e) {
         e.preventDefault();
+        cardEl.classList.remove('collapsed');
         cardEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
       els.nav.appendChild(chip);
@@ -445,7 +496,7 @@
   els.loginForm.addEventListener('submit', function (e) {
     e.preventDefault();
     setStatus(els.loginStatus, 'Signing in…');
-    api('/api/session', { method: 'POST', body: JSON.stringify({ password: els.password.value }) })
+    api('/api/session', { method: 'POST', body: JSON.stringify({ email: els.email.value.trim(), password: els.password.value }) })
       .then(function (r) {
         if (r.ok) { setStatus(els.loginStatus, ''); loadContent(); }
         else setStatus(els.loginStatus, r.body.error || 'Login failed.', 'err');

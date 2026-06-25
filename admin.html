@@ -51,7 +51,12 @@
       <div id="login-notice"></div>
       <form id="login-form">
         <div class="field">
-          <label for="password">Admin password</label>
+          <label for="email">Email</label>
+          <input type="email" id="email" autocomplete="username" placeholder="you@example.com">
+          <small class="muted">Leave blank to log in with the backup password only.</small>
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
           <input type="password" id="password" autocomplete="current-password" required>
         </div>
         <div class="btn-row">
