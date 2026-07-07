@@ -51,7 +51,7 @@ the admin editor, the favicon and the theme metas.
       finale, dense parchment footer. Flat `#0066cc` favicon, theme-color metas.
 - [x] **Step 3 — Motion system.** `js/motion.js`: scroll-linked hero, count-up
       stats, sub-nav raised state, pointer tilt; staggered reveal delays.
-- [ ] **Step 4 — 3D hero.** Vendored Three.js (`js/vendor/`), `js/hero3d.js`
+- [x] **Step 4 — 3D hero.** Vendored Three.js (`js/vendor/`), `js/hero3d.js`
       lazy scene, immutable cache rule in `vercel.json`.
 - [x] **Step 5 — Error pages.** Apple-blank 403/404/500 + the inline 500
       fallback in `api/home.js` (done together with Step 2 so every page always

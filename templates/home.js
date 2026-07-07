@@ -285,6 +285,7 @@ ${head(content, { path: '/' })}
 
   <script src="/js/theme.js?v=3" defer></script>
   <script src="/js/motion.js?v=3" defer></script>
+  <script type="module" src="/js/hero3d.js?v=3"></script>
 </body>
 </html>`;
 }
