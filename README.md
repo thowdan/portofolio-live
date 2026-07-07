@@ -56,7 +56,7 @@ the admin editor, the favicon and the theme metas.
 - [x] **Step 5 — Error pages.** Apple-blank 403/404/500 + the inline 500
       fallback in `api/home.js` (done together with Step 2 so every page always
       has matching styles).
-- [ ] **Step 6 — Admin restyle.** Frosted topbar, pearl cards, pill buttons —
+- [x] **Step 6 — Admin restyle.** Frosted topbar, pearl cards, pill buttons —
       `js/admin.js` untouched (its DOM contract is preserved).
 - [ ] **Step 7 — Final audits.** Single-shadow / no-gradient / no-weight-500
       greps, admin class contract check, cache-buster sweep, README final update.
