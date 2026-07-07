@@ -53,8 +53,8 @@ function projectsHtml(projects) {
       const meta = p.meta ? `<span class="project-meta">${esc(p.meta)}</span>` : '';
       return `
     <section class="tile ${surface} project-tile" data-screen-label="${esc(p.name)}">
-      <div class="tile-inner">
-        <article class="project-stack reveal" data-parallax>
+      <div class="tile-inner" data-parallax>
+        <article class="project-stack reveal">
           <div class="project-eyebrow">${eyebrow}</div>
           <h3 class="project-name">${esc(p.name)}</h3>
           <p class="project-desc">${esc(p.desc)}</p>
@@ -284,6 +284,7 @@ ${head(content, { path: '/' })}
   </footer>
 
   <script src="/js/theme.js?v=3" defer></script>
+  <script src="/js/motion.js?v=3" defer></script>
 </body>
 </html>`;
 }

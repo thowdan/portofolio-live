@@ -49,7 +49,7 @@ the admin editor, the favicon and the theme metas.
       each project as its own full-bleed alternating dark/parchment tile, skills
       as utility-card grid, about/education/languages, awards, dark contact
       finale, dense parchment footer. Flat `#0066cc` favicon, theme-color metas.
-- [ ] **Step 3 — Motion system.** `js/motion.js`: scroll-linked hero, count-up
+- [x] **Step 3 — Motion system.** `js/motion.js`: scroll-linked hero, count-up
       stats, sub-nav raised state, pointer tilt; staggered reveal delays.
 - [ ] **Step 4 — 3D hero.** Vendored Three.js (`js/vendor/`), `js/hero3d.js`
       lazy scene, immutable cache rule in `vercel.json`.
