@@ -9,6 +9,7 @@
   },
   "scripts": {
     "dev": "vercel dev",
+    "preview": "node scripts/preview.js",
     "deploy": "vercel deploy --prod"
   },
   "dependencies": {

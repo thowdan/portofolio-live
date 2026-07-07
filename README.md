@@ -4,9 +4,64 @@ A fast, SEO-ready personal portfolio with a **server-rendered homepage** and a
 password-protected **admin editor** that lets you change the site's content and
 publish it live — no redeploy needed. Built to deploy on **Vercel**.
 
-> Replaces the old AI-exported `index.html`/`error.html`, which depended on a
-> missing `support.js` runtime and Cloudflare-only endpoints and could not run on
-> their own. Everything here is standard HTML/CSS/JS + small Vercel functions.
+---
+
+## 🎨 Redesign — Apple Design System (in progress)
+
+The entire site is being redesigned to a museum-grade, Apple.com-style design
+language. Every surface is affected: the homepage, the 403/404/500 error pages,
+the admin editor, the favicon and the theme metas.
+
+### The design language
+
+- **One accent color** — Action Blue `#0066cc` carries every interactive element
+  (links, pill CTAs, focus rings). `#2997ff` is its on-dark sibling. No second
+  brand color exists anywhere.
+- **Alternating full-bleed tiles** — sections are edge-to-edge canvases that
+  alternate white / parchment `#f5f5f7` / near-black `#272729–#252527`. The color
+  change *is* the divider: no borders, no shadows between sections.
+- **Exactly one shadow** in the whole system — `3px 5px 30px rgba(0,0,0,.22)`,
+  applied only to the hero photo ("product on a surface"). Cards and buttons are
+  flat with 1px hairlines.
+- **No gradients.** Anywhere.
+- **SF Pro typography** (system stack) — hero 56/600 with negative tracking,
+  display 40/600, body **17px**/400/1.47, footer link columns at 17/2.41,
+  fine print 12. Weight ladder 300/400/600/700 — weight 500 is deliberately absent.
+- **Pill grammar** — primary CTAs, chips and search-style inputs are full-radius
+  capsules; utility buttons are 8px rects; utility cards are 18px with hairlines.
+- **Two-row navigation** — a 44px pure-black global nav + a 52px frosted
+  (backdrop-blur) sub-nav with a persistent blue pill CTA.
+- **Motion** — staggered scroll reveals with Apple's ease curve, a scroll-linked
+  hero, count-up stats, pointer tilt, `scale(0.95)` press states — all disabled
+  under `prefers-reduced-motion`.
+- **3D** — a lazy-loaded, CSP-safe (vendored) Three.js particle depth-field
+  behind the hero. It never blocks paint, pauses offscreen, and is skipped on
+  mobile / save-data / reduced-motion.
+
+### Progress
+
+- [x] **Step 1 — Preview tooling + this plan.** `scripts/preview.js` local
+      server (`npm run preview`, no Vercel login needed), README plan.
+- [ ] **Step 2 — Design system + homepage.** Full rewrite of `css/styles.css`
+      (token system per the spec, light + dark themes) and restructure of
+      `templates/home.js` into Apple product tiles: black global nav, frosted
+      sub-nav, full-viewport hero with the photo as the "product", stats strip,
+      each project as its own full-bleed alternating dark/parchment tile, skills
+      as utility-card grid, about/education/languages, awards, dark contact
+      finale, dense parchment footer. Flat `#0066cc` favicon, theme-color metas.
+- [ ] **Step 3 — Motion system.** `js/motion.js`: scroll-linked hero, count-up
+      stats, sub-nav raised state, pointer tilt; staggered reveal delays.
+- [ ] **Step 4 — 3D hero.** Vendored Three.js (`js/vendor/`), `js/hero3d.js`
+      lazy scene, immutable cache rule in `vercel.json`.
+- [ ] **Step 5 — Error pages.** Apple-blank 403/404/500 + the inline 500
+      fallback in `api/home.js`.
+- [ ] **Step 6 — Admin restyle.** Frosted topbar, pearl cards, pill buttons —
+      `js/admin.js` untouched (its DOM contract is preserved).
+- [ ] **Step 7 — Final audits.** Single-shadow / no-gradient / no-weight-500
+      greps, admin class contract check, cache-buster sweep, README final update.
+
+> **If anything above is unchecked when work stops, that item is what remains.**
+> Each step leaves the site fully renderable and deployable.
 
 ---
 
@@ -46,8 +101,13 @@ templates/
   layout.js      # <head> + SEO meta/OG/Twitter/JSON-LD + HTML escaping
   home.js        # homepage HTML
 css/styles.css   # all styles (light/dark themed)
-js/theme.js      # theme toggle + nav + year (every page)
+js/theme.js      # theme toggle + nav + year + reveals (every page)
+js/motion.js     # homepage motion: hero scroll-link, count-up, tilt
+js/hero3d.js     # lazy 3D hero scene (loads vendored Three.js on idle)
+js/vendor/       # vendored libraries (Three.js — CSP allows self only)
 js/admin.js      # admin editor logic
+scripts/
+  preview.js     # local preview server (npm run preview) — dev only
 admin.html       # admin shell (noindex)
 404.html 403.html 500.html
 robots.txt sitemap.xml site.webmanifest favicon.svg
@@ -58,11 +118,13 @@ vercel.json      # routing, caching, security headers
 
 ```bash
 npm install
-npm run dev          # = vercel dev, serves the functions + static files
+npm run preview      # zero-config preview at http://localhost:4173
+npm run dev          # = vercel dev, serves the real functions + static files
 ```
 
-Open http://localhost:3000. Without env vars the site renders default content; the
-admin will tell you what to configure.
+`npm run preview` renders the homepage from `DEFAULT_CONTENT` and serves every
+static page — perfect for design work with no env vars and no Vercel login. Use
+`npm run dev` when you need the real APIs (admin login, saving, résumé upload).
 
 ## Environment variables
 
@@ -107,9 +169,10 @@ canonical/OG/sitemap URLs are absolute and correct.
 ## Caching
 
 `vercel.json` sets `Cache-Control` for static assets (CSS/JS revalidate hourly +
-stale-while-revalidate; images cached a day). The homepage function returns
-`s-maxage=30, stale-while-revalidate=300`, so it's served instantly from the edge
-while reflecting content edits within ~30s. API writes are `no-store`.
+stale-while-revalidate; images cached a day; vendored libraries immutable). The
+homepage function returns `s-maxage=30, stale-while-revalidate=300`, so it's
+served instantly from the edge while reflecting content edits within ~30s. API
+writes are `no-store`.
 
 ## Rate limiting & security
 
@@ -120,7 +183,9 @@ while reflecting content edits within ~30s. API writes are `no-store`.
 - Admin sessions use HMAC-signed, httpOnly, Secure, SameSite cookies; the password
   check is constant-time.
 - Security headers (CSP, HSTS, `X-Content-Type-Options`, `X-Frame-Options`,
-  `Referrer-Policy`, `Permissions-Policy`) are applied in `vercel.json`.
+  `Referrer-Policy`, `Permissions-Policy`) are applied in `vercel.json`. The CSP
+  allows scripts from `'self'` only — which is why Three.js is vendored into
+  `js/vendor/` instead of loaded from a CDN.
 - All editable content is HTML-escaped on render (`templates/layout.js`) to prevent
   injection.
 
@@ -129,3 +194,10 @@ while reflecting content edits within ~30s. API writes are `no-store`.
 You can also edit `DEFAULT_CONTENT` in `lib/content.js` directly and redeploy — handy
 for the initial copy or if you prefer git over the UI. Admin-saved values (in the
 store) take precedence over these defaults.
+
+## Optional follow-up ideas (not done)
+
+- Self-host the **Inter** variable font (`/fonts/*.woff2` + `@font-face` +
+  a `/fonts/(.*)` immutable cache header in `vercel.json`) so non-Apple devices
+  get a closer match to SF Pro. The current system stack already renders true
+  SF Pro on macOS/iOS — the audience most likely to judge.
