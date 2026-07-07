@@ -1,19 +1,31 @@
 // Renders the full homepage HTML from the content model. Pure (no Node-only deps
 // beyond ./layout), and every dynamic value is escaped via esc().
+//
+// Structure follows the Apple tile system: black global nav → frosted sub-nav →
+// hero product tile → parchment stats strip → one full-bleed tile per project
+// (alternating near-black / parchment) → skills utility cards → about →
+// dark contact finale → dense parchment footer.
 
 import { esc, head } from './layout.js';
 
 const themeToggle = `
-      <button class="theme-toggle" type="button" data-theme-toggle aria-label="Toggle dark mode">
-        <i class="fa-solid fa-moon icon-moon" aria-hidden="true"></i>
-        <i class="fa-solid fa-sun icon-sun" aria-hidden="true"></i>
-      </button>`;
+        <button class="theme-toggle" type="button" data-theme-toggle aria-label="Toggle dark mode">
+          <i class="fa-solid fa-moon icon-moon" aria-hidden="true"></i>
+          <i class="fa-solid fa-sun icon-sun" aria-hidden="true"></i>
+        </button>`;
+
+function chips(items, extraClass) {
+  if (!items || !items.length) return '';
+  return `<div class="chips${extraClass ? ` ${extraClass}` : ''}">${items
+    .map((t) => `<span class="chip">${esc(t)}</span>`)
+    .join('')}</div>`;
+}
 
 function statsHtml(stats) {
   return stats
     .map(
-      (s) => `
-        <div class="stat">
+      (s, i) => `
+        <div class="stat reveal" style="--reveal-delay:${i * 80}ms">
           <div class="stat-value">${esc(s.value)}</div>
           <div class="stat-label">${esc(s.label)}</div>
         </div>`
@@ -21,14 +33,16 @@ function statsHtml(stats) {
     .join('');
 }
 
-function chips(items) {
-  return items.map((t) => `<span class="chip">${esc(t)}</span>`).join('');
-}
-
+// Each project is its own full-bleed product tile. Even indexes take the
+// near-black surfaces (cycling the three micro-stepped darks), odd indexes
+// rest on parchment — the color change is the section divider.
 function projectsHtml(projects) {
+  const darks = ['tile--dark-1', 'tile--dark-2', 'tile--dark-3'];
   return projects
-    .map((p) => {
-      const accent = p.accentNote
+    .map((p, i) => {
+      const surface = i % 2 === 0 ? darks[(i / 2) % 3] : 'tile--parchment';
+      const eyebrow = [p.num, p.tag].filter(Boolean).map(esc).join(' · ');
+      const note = p.accentNote
         ? `<div class="project-note"><i class="fa-solid fa-star" aria-hidden="true"></i>${esc(p.accentNote)}</div>`
         : '';
       const link = p.link
@@ -38,22 +52,18 @@ function projectsHtml(projects) {
         : '';
       const meta = p.meta ? `<span class="project-meta">${esc(p.meta)}</span>` : '';
       return `
-        <article class="project reveal">
-          <div class="project-grid">
-            <div class="project-num">${esc(p.num)}</div>
-            <div>
-              <h3 class="project-name">${esc(p.name)}</h3>
-              <div class="project-tag">${esc(p.tag)}</div>
-              <p class="project-desc">${esc(p.desc)}</p>
-              ${accent}
-              <div class="project-foot">
-                <div class="chips">${chips(p.stack || [])}</div>
-                ${link}
-                ${meta}
-              </div>
-            </div>
-          </div>
-        </article>`;
+    <section class="tile ${surface} project-tile" data-screen-label="${esc(p.name)}">
+      <div class="tile-inner">
+        <article class="project-stack reveal" data-parallax>
+          <div class="project-eyebrow">${eyebrow}</div>
+          <h3 class="project-name">${esc(p.name)}</h3>
+          <p class="project-desc">${esc(p.desc)}</p>
+          ${note}
+          ${chips(p.stack, 'project-chips')}
+          ${link || meta ? `<div class="project-links">${link}${meta}</div>` : ''}
+        </article>
+      </div>
+    </section>`;
     })
     .join('');
 }
@@ -61,11 +71,11 @@ function projectsHtml(projects) {
 function skillsHtml(skills) {
   return skills
     .map(
-      (g) => `
-        <div class="skill-card reveal">
-          <div class="eyebrow">${esc(g.label)}</div>
-          <div class="chips">${chips(g.items || [])}</div>
-        </div>`
+      (g, i) => `
+          <div class="ucard reveal" style="--reveal-delay:${(i % 3) * 80}ms">
+            <div class="eyebrow">${esc(g.label)}</div>
+            ${chips(g.items)}
+          </div>`
     )
     .join('');
 }
@@ -73,8 +83,8 @@ function skillsHtml(skills) {
 function awardsHtml(awards) {
   return awards
     .map(
-      (a) => `
-          <div class="award">
+      (a, i) => `
+          <div class="award reveal" style="--reveal-delay:${(i % 2) * 80}ms">
             <div class="award-icon"><i class="${esc(a.iconClass)}" aria-hidden="true"></i></div>
             <div>
               <div class="award-title">${esc(a.title)}</div>
@@ -96,6 +106,18 @@ function languagesHtml(langs) {
     .join('');
 }
 
+// Footer project column: external links open the live project, the rest jump
+// to the work section.
+function footerProjectsHtml(projects) {
+  return projects
+    .map((p) =>
+      p.link
+        ? `<a href="${esc(p.link)}" target="_blank" rel="noopener">${esc(p.name)}</a>`
+        : `<a href="#work">${esc(p.name)}</a>`
+    )
+    .join('');
+}
+
 export function renderHome(content) {
   const { identity, about, education } = content;
   const eduDetail = esc(education.detail).replace(/\n/g, '<br>');
@@ -104,135 +126,164 @@ export function renderHome(content) {
 <html lang="en" data-theme="light">
 ${head(content, { path: '/' })}
 <body>
-  <div class="bg-base" aria-hidden="true"></div>
-  <div class="glow-field" aria-hidden="true">
-    <div class="glow glow-a"></div>
-    <div class="glow glow-b"></div>
-    <div class="glow glow-c"></div>
-  </div>
-
   <a class="skip-link" href="#top">Skip to content</a>
 
-  <nav class="nav" id="nav">
-    <div class="nav-inner">
-      <a class="brand" href="#top">
-        <span class="logo">${esc(identity.initials)}</span>
-        <span class="brand-name">${esc(identity.name)}</span>
-      </a>
-      <div class="nav-links">
-        <a class="nav-link" href="#work">Work</a>
-        <a class="nav-link" href="#skills">Skills</a>
-        <a class="nav-link" href="#about">About</a>
-        <a class="nav-link" href="#contact">Contact</a>
+  <nav class="gnav" aria-label="Global">
+    <div class="gnav-inner">
+      <a class="gnav-brand" href="#top">${esc(identity.initials)}</a>
+      <div class="gnav-links">
+        <a class="gnav-link" href="${esc(identity.github)}" target="_blank" rel="noopener">GitHub</a>
+        ${identity.resumeUrl ? `<a class="gnav-link" href="${esc(identity.resumeUrl)}" target="_blank" rel="noopener">Résumé</a>` : ''}
+        <a class="gnav-link" href="mailto:${esc(identity.email)}">Contact</a>
         ${themeToggle}
-        ${identity.resumeUrl ? `<a class="btn btn-accent btn-sm" href="${esc(identity.resumeUrl)}" target="_blank" rel="noopener">Résumé</a>` : ''}
       </div>
     </div>
   </nav>
 
+  <div class="subnav" id="subnav">
+    <div class="subnav-inner">
+      <span class="subnav-name">${esc(identity.name)}</span>
+      <div class="subnav-links">
+        <a class="subnav-link" href="#work">Work</a>
+        <a class="subnav-link" href="#skills">Skills</a>
+        <a class="subnav-link" href="#about">About</a>
+        <a class="btn btn-accent btn-sm" href="#contact">Get in touch</a>
+      </div>
+    </div>
+  </div>
+
   <main id="top">
-    <section class="hero" data-screen-label="Hero">
-      <div class="hero-copy">
-        <div class="reveal eyebrow-accent">${esc(identity.availability)}</div>
-        <h1 class="reveal hero-title">${esc(identity.heroTitleA)}<br>${esc(identity.heroTitleB)}</h1>
-        <p class="reveal hero-intro">${esc(identity.heroIntro)}</p>
-        <div class="reveal hero-actions">
-          <a class="btn btn-accent" href="#work">View selected work</a>
-          <a class="btn btn-ghost" href="#contact">Get in touch</a>
+    <section class="tile tile--canvas hero" id="hero" data-screen-label="Hero">
+      <canvas class="hero-canvas" id="hero-canvas" aria-hidden="true"></canvas>
+      <div class="hero-inner">
+        <div class="hero-copy" data-hero-copy>
+          <p class="reveal hero-eyebrow">${esc(identity.availability)}</p>
+          <h1 class="reveal hero-title" style="--reveal-delay:80ms">${esc(identity.heroTitleA)}<br>${esc(identity.heroTitleB)}</h1>
+          <p class="reveal hero-intro" style="--reveal-delay:160ms">${esc(identity.heroIntro)}</p>
+          <div class="reveal hero-actions" style="--reveal-delay:240ms">
+            <a class="btn btn-accent" href="#work">View selected work</a>
+            <a class="btn btn-ghost" href="#contact">Get in touch</a>
+          </div>
         </div>
-      </div>
-      <div class="reveal hero-photo-wrap">
-        <div class="hero-photo-glow" aria-hidden="true"></div>
-        <div class="hero-photo">
-          <img src="${esc(identity.photo)}" alt="${esc(identity.name)}" width="640" height="800" loading="eager" fetchpriority="high" decoding="async">
-          <div class="hero-photo-card">
+        <div class="reveal hero-figure" style="--reveal-delay:200ms" data-hero-figure>
+          <div class="hero-photo" data-tilt>
+            <img class="product-img" src="${esc(identity.photo)}" alt="${esc(identity.name)}" width="640" height="800" loading="eager" fetchpriority="high" decoding="async">
+          </div>
+          <div class="hero-caption">
             <div>
-              <div class="hero-photo-name">${esc(identity.cardName)}</div>
-              <div class="hero-photo-sub">${esc(identity.cardSub)}</div>
+              <span class="hero-caption-name">${esc(identity.cardName)}</span>
+              <span class="hero-caption-sub">${esc(identity.cardSub)}</span>
             </div>
-            <a class="chip-link" href="${esc(identity.github)}" target="_blank" rel="noopener"><i class="fa-brands fa-github" aria-hidden="true"></i>GitHub</a>
+            <a href="${esc(identity.github)}" target="_blank" rel="noopener"><i class="fa-brands fa-github" aria-hidden="true"></i> GitHub</a>
           </div>
         </div>
       </div>
     </section>
 
-    <section class="stats-strip reveal">
-      <div class="stats-grid">${statsHtml(content.stats)}</div>
-    </section>
-
-    <section class="section" id="work" data-screen-label="Selected Work">
-      <div class="section-head reveal">
-        <h2 class="section-title">Selected work</h2>
-        <span class="section-aside">Three projects, built end to end</span>
+    <section class="tile tile--parchment" data-screen-label="Stats">
+      <div class="tile-inner">
+        <div class="stats-grid">${statsHtml(content.stats)}</div>
       </div>
-      <div class="projects">${projectsHtml(content.projects)}</div>
     </section>
 
-    <section class="section" id="skills" data-screen-label="Skills">
-      <div class="reveal section-intro">
-        <h2 class="section-title">Toolkit</h2>
-        <p class="section-lead">The languages, frameworks and platforms I reach for across the stack.</p>
+    <section class="tile tile--canvas work-intro" id="work" data-screen-label="Selected Work">
+      <div class="tile-inner section-head--center reveal">
+        <p class="section-eyebrow">Selected work</p>
+        <h2 class="section-title">Built end to end.</h2>
+        <p class="section-lead">From idea to production — every project below was designed, engineered and shipped as a complete system.</p>
       </div>
-      <div class="skills-grid">${skillsHtml(content.skills)}</div>
     </section>
 
-    <section class="section" id="about" data-screen-label="About">
-      <div class="about-grid">
-        <div class="about-card reveal">
-          <h2 class="about-heading">${esc(about.heading)}</h2>
-          ${about.paragraphs.map((p) => `<p class="about-text">${esc(p)}</p>`).join('')}
+    ${projectsHtml(content.projects)}
+
+    <section class="tile tile--canvas" id="skills" data-screen-label="Skills">
+      <div class="tile-inner tile-inner--wide">
+        <div class="section-head--center reveal">
+          <p class="section-eyebrow">Toolkit</p>
+          <h2 class="section-title">The stack behind the work.</h2>
+          <p class="section-lead">The languages, frameworks and platforms I reach for across the stack.</p>
         </div>
-        <div class="about-side reveal">
-          <div class="side-card">
-            <div class="eyebrow">Education</div>
-            <div class="side-title">${esc(education.degree)}</div>
-            <div class="side-detail">${eduDetail}</div>
-          </div>
-          <div class="side-card">
-            <div class="eyebrow">Languages</div>
-            <div class="lang-list">${languagesHtml(content.languages)}</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="reveal recognition">
-        <div class="eyebrow">Recognition</div>
-        <div class="awards-grid">${awardsHtml(content.awards)}</div>
+        <div class="skills-grid">${skillsHtml(content.skills)}</div>
       </div>
     </section>
 
-    <section class="section" id="contact" data-screen-label="Contact">
-      <div class="contact-card reveal">
-        <div class="contact-glow" aria-hidden="true"></div>
-        <div class="contact-inner">
-          <h2 class="contact-title">${esc(content.contact.heading)}</h2>
-          <p class="contact-sub">${esc(content.contact.sub)}</p>
-          <div class="contact-actions">
-            <a class="btn btn-accent" href="mailto:${esc(identity.email)}"><i class="fa-solid fa-envelope" aria-hidden="true"></i>${esc(
-    identity.email
-  )}</a>
-            ${
-              identity.resumeUrl
-                ? `<a class="btn btn-ghost" href="${esc(identity.resumeUrl)}" target="_blank" rel="noopener"><i class="fa-solid fa-arrow-down-to-line" aria-hidden="true"></i>Download résumé</a>`
-                : ''
-            }
+    <section class="tile tile--parchment" id="about" data-screen-label="About">
+      <div class="tile-inner">
+        <div class="about-cols">
+          <div class="reveal">
+            <p class="section-eyebrow">${esc(about.heading)}</p>
+            ${about.paragraphs.map((p) => `<p class="about-text">${esc(p)}</p>`).join('')}
           </div>
-          <div class="contact-links">
-            <a href="${esc(identity.github)}" target="_blank" rel="noopener"><i class="fa-brands fa-github" aria-hidden="true"></i>${esc(
-    identity.githubLabel
-  )}</a>
-            <a href="tel:${esc(identity.phone.replace(/\s+/g, ''))}"><i class="fa-solid fa-phone" aria-hidden="true"></i>${esc(
-    identity.phone
-  )}</a>
-            <span><i class="fa-solid fa-location-dot" aria-hidden="true"></i>${esc(identity.location)}</span>
+          <div class="about-side reveal" style="--reveal-delay:120ms">
+            <div class="side-capsule">
+              <div class="eyebrow">Education</div>
+              <div class="side-title">${esc(education.degree)}</div>
+              <div class="side-detail">${eduDetail}</div>
+            </div>
+            <div class="side-capsule">
+              <div class="eyebrow">Languages</div>
+              <div class="lang-list">${languagesHtml(content.languages)}</div>
+            </div>
           </div>
         </div>
+
+        <div class="recognition">
+          <p class="section-eyebrow reveal">Recognition</p>
+          <div class="awards-grid">${awardsHtml(content.awards)}</div>
+        </div>
       </div>
-      <div class="footer">© <span data-year>${new Date().getFullYear()}</span> ${esc(identity.name)}</div>
+    </section>
+
+    <section class="tile tile--dark-1 contact-tile" id="contact" data-screen-label="Contact">
+      <div class="tile-inner reveal">
+        <h2 class="contact-title">${esc(content.contact.heading)}</h2>
+        <p class="contact-sub">${esc(content.contact.sub)}</p>
+        <div class="contact-actions">
+          <a class="btn btn-accent" href="mailto:${esc(identity.email)}"><i class="fa-solid fa-envelope" aria-hidden="true"></i>${esc(identity.email)}</a>
+          ${
+            identity.resumeUrl
+              ? `<a class="btn btn-ghost" href="${esc(identity.resumeUrl)}" target="_blank" rel="noopener"><i class="fa-solid fa-arrow-down-to-line" aria-hidden="true"></i>Download résumé</a>`
+              : ''
+          }
+        </div>
+        <div class="contact-links">
+          <a href="${esc(identity.github)}" target="_blank" rel="noopener"><i class="fa-brands fa-github" aria-hidden="true"></i>${esc(identity.githubLabel)}</a>
+          <a href="tel:${esc(identity.phone.replace(/\s+/g, ''))}"><i class="fa-solid fa-phone" aria-hidden="true"></i>${esc(identity.phone)}</a>
+          <span><i class="fa-solid fa-location-dot" aria-hidden="true"></i>${esc(identity.location)}</span>
+        </div>
+      </div>
     </section>
   </main>
 
-  <script src="/js/theme.js?v=2" defer></script>
+  <footer class="site-footer">
+    <div class="tile-inner">
+      <div class="footer-cols">
+        <div class="footer-col">
+          <p class="footer-head">Explore</p>
+          <a href="#work">Work</a>
+          <a href="#skills">Skills</a>
+          <a href="#about">About</a>
+          <a href="#contact">Contact</a>
+        </div>
+        <div class="footer-col">
+          <p class="footer-head">Projects</p>
+          ${footerProjectsHtml(content.projects)}
+        </div>
+        <div class="footer-col">
+          <p class="footer-head">Elsewhere</p>
+          <a href="${esc(identity.github)}" target="_blank" rel="noopener">${esc(identity.githubLabel)}</a>
+          <a href="mailto:${esc(identity.email)}">${esc(identity.email)}</a>
+          <a href="tel:${esc(identity.phone.replace(/\s+/g, ''))}">${esc(identity.phone)}</a>
+        </div>
+      </div>
+      <div class="footer-legal">
+        <span>© <span data-year>${new Date().getFullYear()}</span> ${esc(identity.name)}. All rights reserved.</span>
+        <span>${esc(identity.location)}</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/js/theme.js?v=3" defer></script>
 </body>
 </html>`;
 }

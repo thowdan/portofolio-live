@@ -42,7 +42,7 @@ the admin editor, the favicon and the theme metas.
 
 - [x] **Step 1 — Preview tooling + this plan.** `scripts/preview.js` local
       server (`npm run preview`, no Vercel login needed), README plan.
-- [ ] **Step 2 — Design system + homepage.** Full rewrite of `css/styles.css`
+- [x] **Step 2 — Design system + homepage.** Full rewrite of `css/styles.css`
       (token system per the spec, light + dark themes) and restructure of
       `templates/home.js` into Apple product tiles: black global nav, frosted
       sub-nav, full-viewport hero with the photo as the "product", stats strip,
@@ -53,8 +53,9 @@ the admin editor, the favicon and the theme metas.
       stats, sub-nav raised state, pointer tilt; staggered reveal delays.
 - [ ] **Step 4 — 3D hero.** Vendored Three.js (`js/vendor/`), `js/hero3d.js`
       lazy scene, immutable cache rule in `vercel.json`.
-- [ ] **Step 5 — Error pages.** Apple-blank 403/404/500 + the inline 500
-      fallback in `api/home.js`.
+- [x] **Step 5 — Error pages.** Apple-blank 403/404/500 + the inline 500
+      fallback in `api/home.js` (done together with Step 2 so every page always
+      has matching styles).
 - [ ] **Step 6 — Admin restyle.** Frosted topbar, pearl cards, pill buttons —
       `js/admin.js` untouched (its DOM contract is preserved).
 - [ ] **Step 7 — Final audits.** Single-shadow / no-gradient / no-weight-500

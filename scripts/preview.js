@@ -52,7 +52,13 @@ const server = http.createServer(async (req, res) => {
 
   try {
     if (path === '/') {
-      return send(res, 200, MIME['.html'], renderHome(DEFAULT_CONTENT));
+      let html = renderHome(DEFAULT_CONTENT);
+      // Dev nicety: /?theme=light|dark pins the theme (useful for screenshots).
+      const theme = url.searchParams.get('theme');
+      if (theme === 'light' || theme === 'dark') {
+        html = html.replace("localStorage.getItem('pf-theme')", `'${theme}'`);
+      }
+      return send(res, 200, MIME['.html'], html);
     }
     if (path === '/api/session') {
       // Stub: unconfigured admin so admin.html shows its login view for styling.

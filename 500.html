@@ -4,14 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Something went wrong — Thowdan Al-Eryani</title>
-  <meta name="description" content="An unexpected error occurred. Please try again in a moment.">
+  <meta name="description" content="An unexpected error occurred.">
   <meta name="robots" content="noindex, follow">
-  <meta name="theme-color" content="#F5F5F7" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#0A0B0F" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#000000">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
-  <link rel="preload" href="/css/styles.css" as="style">
-  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="preload" href="/css/styles.css?v=3" as="style">
+  <link rel="stylesheet" href="/css/styles.css?v=3">
   <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'">
   <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"></noscript>
   <script>
@@ -25,38 +24,26 @@
   </script>
 </head>
 <body>
-  <div class="bg-base" aria-hidden="true"></div>
-  <div class="glow-field" aria-hidden="true">
-    <div class="glow glow-a"></div>
-    <div class="glow glow-b"></div>
-  </div>
+  <nav class="gnav" aria-label="Global">
+    <div class="gnav-inner">
+      <a class="gnav-brand" href="/">Thowdan Al-Eryani</a>
+    </div>
+  </nav>
 
-  <div class="error-shell">
-    <header class="error-header">
-      <a class="brand" href="/">
-        <span class="logo">TA</span>
-        <span class="brand-name">Thowdan Al-Eryani</span>
-      </a>
-    </header>
-
-    <main class="error-main">
-      <div class="error-card">
-        <div class="error-card-glow" aria-hidden="true"></div>
-        <div class="error-inner">
-          <div class="error-code">500</div>
-          <h1 class="error-title">Something went wrong</h1>
-          <p class="error-msg">An unexpected error occurred on our end. Please try again in a moment.</p>
-          <div class="error-actions">
-            <a class="btn btn-accent" href="/">Back to home</a>
-            <a class="btn btn-ghost" href="mailto:thowdan64@gmail.com?subject=Site%20error">Let me know</a>
-          </div>
-        </div>
+  <main class="error-main">
+    <div>
+      <p class="error-eyebrow">Error 500</p>
+      <h1 class="error-title">Something went wrong.</h1>
+      <p class="error-msg">An unexpected error occurred on our side. Please try again in a moment.</p>
+      <div class="error-actions">
+        <a class="btn btn-accent" href="/">Go to homepage</a>
+        <a class="text-link" href="mailto:thowdan64@gmail.com?subject=Site%20error">Email me</a>
       </div>
-    </main>
+    </div>
+  </main>
 
-    <footer class="footer">© <span data-year>2026</span> Thowdan Al-Eryani</footer>
-  </div>
+  <footer class="error-footer">© <span data-year>2026</span> Thowdan Al-Eryani</footer>
 
-  <script src="/js/theme.js" defer></script>
+  <script src="/js/theme.js?v=3" defer></script>
 </body>
 </html>
