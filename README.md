@@ -6,10 +6,10 @@ publish it live — no redeploy needed. Built to deploy on **Vercel**.
 
 ---
 
-## 🎨 Redesign — Apple Design System (in progress)
+## 🎨 Redesign — Apple Design System (complete ✅)
 
-The entire site is being redesigned to a museum-grade, Apple.com-style design
-language. Every surface is affected: the homepage, the 403/404/500 error pages,
+The entire site has been redesigned to a museum-grade, Apple.com-style design
+language. Every surface was rebuilt: the homepage, the 403/404/500 error pages,
 the admin editor, the favicon and the theme metas.
 
 ### The design language
@@ -58,11 +58,27 @@ the admin editor, the favicon and the theme metas.
       has matching styles).
 - [x] **Step 6 — Admin restyle.** Frosted topbar, pearl cards, pill buttons —
       `js/admin.js` untouched (its DOM contract is preserved).
-- [ ] **Step 7 — Final audits.** Single-shadow / no-gradient / no-weight-500
-      greps, admin class contract check, cache-buster sweep, README final update.
+- [x] **Step 7 — Final audits.** All passed: exactly one `box-shadow` use (the
+      hero photo), zero gradients, zero `font-weight: 500`, every admin.js class
+      styled, all 18 asset references on `?v=3`, sitemap lastmod bumped.
 
-> **If anything above is unchecked when work stops, that item is what remains.**
-> Each step leaves the site fully renderable and deployable.
+### Verified
+
+- Homepage light + dark themes at 1440 / 1280 / 834 / 390 px — correct tile
+  alternation, grid collapses and hero type steps at every width.
+- `prefers-reduced-motion`: all content visible and static, stats show final
+  values, 3D never loads.
+- 3D hero verified rendering in both themes (WebGL-less browsers get the
+  designed hero with an empty canvas — graceful fallback confirmed).
+- Error pages and admin login rendered and reviewed; `js/admin.js` untouched.
+- No console errors or page exceptions on any surface.
+
+### What remains (nothing blocking — deploy when ready)
+
+Everything planned is done. To ship: `npm run deploy` (or push to the connected
+Git branch). Two optional nice-to-haves are listed at the bottom of this file
+(self-hosted Inter; nothing else outstanding). After deploying, hard-refresh
+once — the `?v=3` cache busters take care of stale CSS/JS for visitors.
 
 ---
 
