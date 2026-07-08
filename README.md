@@ -67,13 +67,32 @@ the admin editor, the favicon and the theme metas.
       Inter v4 variable font, upright only — the site uses no italics),
       `@font-face` + font-stack reorder in `css/styles.css` so Apple devices
       still resolve true SF Pro first and only non-Apple devices download
-      Inter, immutable `/fonts/(.*)` cache rule in `vercel.json`, all asset
-      references bumped to `?v=4`.
+      Inter, immutable `/fonts/(.*)` cache rule in `vercel.json`.
+- [x] **Step 9 — Mobile optimization pass.** The hero portrait becomes a small
+      product card on phones (240px ≤734 / 220px ≤480 — it no longer dominates
+      the screen); Apple padding ramp 80 → 64 (≤834) → 48px (≤640); stats
+      collapse to a dense spec-table instead of a three-screen stack; new 419px
+      small-phone type step; 833 → 834 breakpoint alignment; `svh` fallbacks
+      for the iOS 100vh overshoot; 44px touch targets everywhere (theme
+      toggle, sub-nav/project/caption links); `overflow-x: clip` safety net;
+      and a full-screen frosted **mobile menu** (Apple LocalNav pattern —
+      staggered link reveal, scroll lock, Escape/resize close) replacing the
+      links that previously just vanished on phones.
+- [x] **Step 10 — Recruiter Configurator.** Apple buy-page grammar between the
+      projects and skills: pill option chips ("A frontend engineer" / "A
+      backend engineer" / "A full-stack owner" / "Someone who ships fast") —
+      selecting one crossfades an evidence panel with a personal statement,
+      proof chips, deep links to the matching project tiles and a count-up
+      stat. Server-rendered panels (SEO-safe, no-JS shows the first), WAI-ARIA
+      tabs with arrow-key navigation, new `configurator` content section
+      (editable in the admin), `js/configurator.js`, all asset references on
+      `?v=5`.
 
 ### Verified
 
-- Homepage light + dark themes at 1440 / 1280 / 834 / 390 px — correct tile
-  alternation, grid collapses and hero type steps at every width.
+- Homepage light + dark themes at 1440 / 1280 / 834 / 640 / 390 / 375 / 320 px —
+  correct tile alternation, grid collapses and hero type steps at every width;
+  no horizontal scroll at any width.
 - `prefers-reduced-motion`: all content visible and static, stats show final
   values, 3D never loads.
 - 3D hero verified rendering in both themes (WebGL-less browsers get the
@@ -83,9 +102,10 @@ the admin editor, the favicon and the theme metas.
 
 ### What remains (nothing blocking — deploy when ready)
 
-Everything planned is done, including the optional self-hosted Inter font. To
-ship: `npm run deploy` (or push to the connected Git branch). After deploying,
-hard-refresh once — the `?v=4` cache busters take care of stale CSS/JS for
+Everything planned is done, including the optional self-hosted Inter font, the
+mobile optimization pass and the Recruiter Configurator. To ship:
+`npm run deploy` (or push to the connected Git branch). After deploying,
+hard-refresh once — the `?v=5` cache busters take care of stale CSS/JS for
 visitors.
 
 ---
@@ -127,8 +147,9 @@ templates/
   home.js        # homepage HTML
 css/styles.css   # all styles (light/dark themed)
 fonts/           # self-hosted Inter variable font (non-Apple devices)
-js/theme.js      # theme toggle + nav + year + reveals (every page)
+js/theme.js      # theme toggle + nav + mobile menu + year + reveals (every page)
 js/motion.js     # homepage motion: hero scroll-link, count-up, tilt
+js/configurator.js # recruiter configurator: chip tabs + panel crossfade
 js/hero3d.js     # lazy 3D hero scene (loads vendored Three.js on idle)
 js/vendor/       # vendored libraries (Three.js — CSP allows self only)
 js/admin.js      # admin editor logic

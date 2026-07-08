@@ -338,6 +338,34 @@
       return { num: '', name: '', tag: '', desc: '', stack: [], meta: '', accentNote: '', link: '', linkLabel: '' };
     }, 'project'));
 
+    // Recruiter configurator — guard-init covers stored content saved before
+    // this section existed (the GET merge normally supplies defaults).
+    state.configurator = state.configurator || {};
+    var cf = state.configurator;
+    cf.options = cf.options || [];
+    f.appendChild(card('Configurator — heading',
+      field('Eyebrow', cf.eyebrow, function (v) { cf.eyebrow = v; }),
+      field('Title', cf.title, function (v) { cf.title = v; }),
+      field('Lead', cf.lead, function (v) { cf.lead = v; }, { textarea: true })
+    ));
+
+    f.appendChild(listCard('Configurator options', cf.options, function (o) {
+      o.stat = o.stat || { value: '', label: '' };
+      return [
+        field('Chip label', o.chipLabel, function (v) { o.chipLabel = v; }),
+        field('Statement', o.statement, function (v) { o.statement = v; }, { textarea: true }),
+        csvField('Proof chips (comma separated)', o, 'proof'),
+        csvField('Linked project names (comma separated)', o, 'projectRefs', 'Must match project names exactly'),
+        row(
+          field('Stat value', o.stat.value, function (v) { o.stat.value = v; }, { hint: 'Leading number animates, e.g. 94%' }),
+          field('Stat label', o.stat.label, function (v) { o.stat.label = v; })
+        ),
+        field('ID', o.id, function (v) { o.id = v; })
+      ];
+    }, function () {
+      return { id: '', chipLabel: '', statement: '', proof: [], projectRefs: [], stat: { value: '', label: '' } };
+    }, 'option'));
+
     f.appendChild(listCard('Skill groups', state.skills, function (g) {
       return [
         field('Group label', g.label, function (v) { g.label = v; }),

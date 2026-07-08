@@ -3,8 +3,8 @@
 //
 // Structure follows the Apple tile system: black global nav → frosted sub-nav →
 // hero product tile → parchment stats strip → one full-bleed tile per project
-// (alternating near-black / parchment) → skills utility cards → about →
-// dark contact finale → dense parchment footer.
+// (alternating near-black / parchment) → recruiter configurator → skills
+// utility cards → about → dark contact finale → dense parchment footer.
 
 import { esc, head } from './layout.js';
 
@@ -52,7 +52,7 @@ function projectsHtml(projects) {
         : '';
       const meta = p.meta ? `<span class="project-meta">${esc(p.meta)}</span>` : '';
       return `
-    <section class="tile ${surface} project-tile" data-screen-label="${esc(p.name)}">
+    <section class="tile ${surface} project-tile" id="project-${i}" data-screen-label="${esc(p.name)}">
       <div class="tile-inner" data-parallax>
         <article class="project-stack reveal">
           <div class="project-eyebrow">${eyebrow}</div>
@@ -66,6 +66,60 @@ function projectsHtml(projects) {
     </section>`;
     })
     .join('');
+}
+
+// Recruiter configurator — Apple buy-page grammar. Every option's evidence
+// panel is server-rendered (SEO-safe; no-JS shows the first panel via pure
+// CSS); js/configurator.js only toggles classes, never injects HTML.
+// projectRefs match projects by name (case-insensitive) so admin reordering
+// can't break the links; unmatched refs are silently skipped.
+function configuratorHtml(content) {
+  const cfg = content.configurator;
+  if (!cfg || !cfg.options || !cfg.options.length) return '';
+  const chipRow = cfg.options
+    .map(
+      (o, i) => `
+          <button class="cfg-chip${i === 0 ? ' is-selected' : ''}" id="cfg-tab-${i}" type="button" role="tab" aria-selected="${i === 0}" aria-controls="cfg-panel-${i}" tabindex="${i === 0 ? '0' : '-1'}">${esc(o.chipLabel)}</button>`
+    )
+    .join('');
+  const panels = cfg.options
+    .map((o, i) => {
+      const links = (o.projectRefs || [])
+        .map((ref) => {
+          const idx = content.projects.findIndex(
+            (p) => p.name.trim().toLowerCase() === String(ref).trim().toLowerCase()
+          );
+          return idx === -1
+            ? ''
+            : `<a class="project-link" href="#project-${idx}">${esc(content.projects[idx].name)} <i class="fa-solid fa-arrow-down" aria-hidden="true"></i></a>`;
+        })
+        .join('');
+      const stat = o.stat && o.stat.value
+        ? `<div class="cfg-stat"><span class="cfg-stat-value" data-count-up>${esc(o.stat.value)}</span><span class="cfg-stat-label">${esc(o.stat.label)}</span></div>`
+        : '';
+      return `
+          <div class="cfg-panel${i === 0 ? ' is-active' : ''}" id="cfg-panel-${i}" role="tabpanel" aria-labelledby="cfg-tab-${i}">
+            <p class="cfg-statement">${esc(o.statement)}</p>
+            ${chips(o.proof, 'cfg-proof')}
+            ${links ? `<div class="cfg-links">${links}</div>` : ''}
+            ${stat}
+          </div>`;
+    })
+    .join('');
+  return `
+    <section class="tile tile--parchment cfg" id="configurator" data-screen-label="Configurator" data-configurator>
+      <div class="tile-inner">
+        <div class="section-head--center reveal">
+          <p class="section-eyebrow">${esc(cfg.eyebrow)}</p>
+          <h2 class="section-title">${esc(cfg.title)}</h2>
+          <p class="section-lead">${esc(cfg.lead)}</p>
+        </div>
+        <div class="cfg-chips reveal" style="--reveal-delay:80ms" role="tablist" aria-label="Configure the role">${chipRow}
+        </div>
+        <div class="cfg-panels reveal" style="--reveal-delay:160ms">${panels}
+        </div>
+      </div>
+    </section>`;
 }
 
 function skillsHtml(skills) {
@@ -148,8 +202,25 @@ ${head(content, { path: '/' })}
         <a class="subnav-link" href="#skills">Skills</a>
         <a class="subnav-link" href="#about">About</a>
         <a class="btn btn-accent btn-sm" href="#contact">Get in touch</a>
+        <button class="subnav-menu" type="button" data-menu-toggle aria-expanded="false" aria-controls="mobile-menu" aria-label="Open menu">
+          <i class="fa-solid fa-bars" aria-hidden="true"></i>
+        </button>
       </div>
     </div>
+  </div>
+
+  <div class="mobile-menu" id="mobile-menu" data-menu hidden>
+    <button class="mobile-menu-close" type="button" data-menu-toggle aria-label="Close menu">
+      <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+    </button>
+    <nav class="mobile-menu-links" aria-label="Menu">
+      <a href="#work" style="--i:0">Work</a>
+      <a href="#skills" style="--i:1">Skills</a>
+      <a href="#about" style="--i:2">About</a>
+      <a href="${esc(identity.github)}" target="_blank" rel="noopener" style="--i:3">GitHub</a>
+      ${identity.resumeUrl ? `<a href="${esc(identity.resumeUrl)}" target="_blank" rel="noopener" style="--i:4">Résumé</a>` : ''}
+      <a href="mailto:${esc(identity.email)}" style="--i:5">Contact</a>
+    </nav>
   </div>
 
   <main id="top">
@@ -195,6 +266,11 @@ ${head(content, { path: '/' })}
     </section>
 
     ${projectsHtml(content.projects)}
+
+    ${/* Surface parity note: with an odd project count the last project tile is
+        dark, so the parchment configurator reads as its own beat. If the project
+        count ever becomes even (last tile parchment), revisit this surface. */ ''}
+    ${configuratorHtml(content)}
 
     <section class="tile tile--canvas" id="skills" data-screen-label="Skills">
       <div class="tile-inner tile-inner--wide">
@@ -283,9 +359,10 @@ ${head(content, { path: '/' })}
     </div>
   </footer>
 
-  <script src="/js/theme.js?v=4" defer></script>
-  <script src="/js/motion.js?v=4" defer></script>
-  <script type="module" src="/js/hero3d.js?v=4"></script>
+  <script src="/js/theme.js?v=5" defer></script>
+  <script src="/js/motion.js?v=5" defer></script>
+  <script src="/js/configurator.js?v=5" defer></script>
+  <script type="module" src="/js/hero3d.js?v=5"></script>
 </body>
 </html>`;
 }

@@ -110,6 +110,13 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
+/* Safety net: nothing may create sideways scroll on phones. clip (not hidden)
+   so no scroll container forms and the sticky sub-nav keeps working. */
+html,
+body {
+  overflow-x: clip;
+}
+
 body {
   margin: 0;
   background: var(--canvas);
@@ -283,8 +290,8 @@ a:hover {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   border: none;
   border-radius: 9999px;
   background: transparent;
@@ -452,8 +459,6 @@ a:hover {
 .gnav .theme-toggle {
   color: rgba(255, 255, 255, 0.8);
   font-size: 12px;
-  width: 28px;
-  height: 28px;
 }
 
 .gnav .theme-toggle:hover {
@@ -512,11 +517,117 @@ a:hover {
   font-size: 14px;
   letter-spacing: -0.224px;
   transition: color 0.25s ease;
+  /* 44px hit target inside the 52px bar, no layout shift */
+  padding: 14px 8px;
+  margin: -14px -8px;
 }
 
 .subnav-link:hover {
   color: var(--ink);
   text-decoration: none;
+}
+
+/* Mobile menu trigger — lives in the sticky sub-nav (the gnav scrolls away),
+   hidden until the nav links collapse at 834px. */
+.subnav-menu {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-right: -8px;
+  border: none;
+  border-radius: 9999px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 17px;
+  cursor: pointer;
+  transition: transform 0.18s ease;
+}
+
+.subnav-menu:active {
+  transform: scale(0.95);
+}
+
+/* ==========================================================================
+   Mobile menu — full-screen frosted overlay (Apple LocalNav pattern).
+   Reuses --subnav-bg so both themes come free. Links reveal with the
+   signature stagger; reduced-motion collapses every transition to instant.
+   ========================================================================== */
+
+.mobile-menu {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: var(--subnav-bg);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0s linear 0.3s;
+}
+
+.mobile-menu.is-open {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.3s ease;
+}
+
+.mobile-menu-close {
+  position: absolute;
+  top: 8px;
+  right: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 9999px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 21px;
+  cursor: pointer;
+  transition: transform 0.18s ease;
+}
+
+.mobile-menu-close:active {
+  transform: scale(0.95);
+}
+
+.mobile-menu-links {
+  display: flex;
+  flex-direction: column;
+  padding: 96px 32px;
+}
+
+.mobile-menu-links a {
+  color: var(--ink);
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.28px;
+  line-height: 1.14;
+  padding: 12px 0;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.mobile-menu-links a:hover {
+  text-decoration: none;
+  color: var(--link);
+}
+
+.mobile-menu.is-open .mobile-menu-links a {
+  opacity: 1;
+  transform: none;
+  transition-delay: calc(60ms + var(--i, 0) * 40ms);
+}
+
+/* Scroll lock while the menu is open */
+html.menu-open,
+html.menu-open body {
+  overflow: hidden;
 }
 
 /* ==========================================================================
@@ -560,6 +671,8 @@ html.reveal-on .reveal.is-visible {
   z-index: 1;
   max-width: 1200px;
   min-height: clamp(540px, 100vh - 256px, 860px);
+  /* svh sidesteps the iOS dynamic-toolbar 100vh overshoot; vh above is the fallback */
+  min-height: clamp(540px, 100svh - 256px, 860px);
   margin: 0 auto;
   padding: 0 24px;
   display: grid;
@@ -650,6 +763,9 @@ html.reveal-on .reveal.is-visible {
   font-size: 14px;
   letter-spacing: -0.224px;
   white-space: nowrap;
+  /* 44px hit target, no layout shift */
+  padding: 10px 0;
+  margin: -10px 0;
 }
 
 /* ==========================================================================
@@ -801,6 +917,9 @@ html.reveal-on .reveal.is-visible {
   font-size: 17px;
   letter-spacing: -0.374px;
   color: var(--link);
+  /* 44px hit target, no layout shift */
+  padding: 12px 0;
+  margin: -12px 0;
 }
 
 .project-link i {
@@ -844,6 +963,122 @@ html.reveal-on .reveal.is-visible {
 
 .ucard .eyebrow {
   margin-bottom: 16px;
+}
+
+/* ==========================================================================
+   Recruiter configurator — Apple buy-page grammar. Options are pill chips
+   (selected = 2px focus-blue stroke, NO fill change); the evidence panels all
+   stack in one grid cell and crossfade from a single class toggle. Tokens
+   only, so both themes come free.
+   ========================================================================== */
+
+.cfg-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin: 40px 0 32px;
+}
+
+.cfg-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--canvas);
+  color: var(--ink);
+  border: 1px solid var(--hairline);
+  border-radius: 9999px;
+  font-family: inherit;
+  font-size: 14px;
+  letter-spacing: -0.224px;
+  cursor: pointer;
+  transition: border-color 0.25s ease, transform 0.18s ease;
+}
+
+.cfg-chip:hover {
+  border-color: var(--muted);
+}
+
+.cfg-chip:active {
+  transform: scale(0.95);
+}
+
+/* Selected = 2px stroke; padding compensates so nothing shifts */
+.cfg-chip.is-selected {
+  border: 2px solid var(--focus);
+  padding: 11px 15px;
+  font-weight: 600;
+}
+
+/* Every panel shares one grid cell: the container holds the tallest panel's
+   height so switching never reflows the page. visibility also drops inactive
+   panels from the accessibility tree. */
+.cfg-panels {
+  display: grid;
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+.cfg-panel {
+  grid-area: 1 / 1;
+  background: var(--pearl);
+  border: 1px solid var(--hairline);
+  border-radius: 18px;
+  padding: 36px 40px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(10px);
+  transition: opacity 0.35s ease, transform 0.35s ease, visibility 0s linear 0.35s;
+}
+
+.cfg-panel.is-active {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition: opacity 0.45s ease 0.08s, transform 0.45s ease 0.08s;
+}
+
+.cfg-statement {
+  margin: 0 0 24px;
+  font-size: 24px;
+  font-weight: 300;
+  line-height: 1.5;
+  letter-spacing: 0;
+  color: var(--ink);
+}
+
+.cfg-proof {
+  margin-bottom: 24px;
+}
+
+.cfg-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 28px;
+}
+
+.cfg-stat {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid var(--divider-soft);
+}
+
+.cfg-stat-value {
+  font-size: 40px;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.2px;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.cfg-stat-label {
+  font-size: 14px;
+  letter-spacing: -0.224px;
+  color: var(--muted);
 }
 
 /* ==========================================================================
@@ -1081,6 +1316,8 @@ html.reveal-on .reveal.is-visible {
 
 .error-main {
   min-height: calc(100vh - 44px - 80px);
+  /* svh sidesteps the iOS dynamic-toolbar 100vh overshoot; vh above is the fallback */
+  min-height: calc(100svh - 44px - 80px);
   display: grid;
   place-items: center;
   padding: 80px 24px;
@@ -1430,12 +1667,12 @@ textarea::placeholder {
 }
 
 /* ==========================================================================
-   Responsive — structural breakpoints: 1440 / 1068 / 833 / 734 / 640 / 480
+   Responsive — structural breakpoints: 1440 / 1068 / 834 / 734 / 640 / 480 / 419
    ========================================================================== */
 
 @media (max-width: 1068px) {
   .hero-title {
-    font-size: 48px;
+    font-size: 40px;
   }
 
   .hero-inner {
@@ -1455,13 +1692,21 @@ textarea::placeholder {
   }
 }
 
-@media (max-width: 833px) {
+@media (max-width: 834px) {
   .gnav-links .gnav-link {
     display: none;
   }
 
-  .hero-title {
-    font-size: 40px;
+  .subnav-menu {
+    display: inline-flex;
+  }
+
+  .tile {
+    padding: 64px 0;
+  }
+
+  .work-intro {
+    padding: 64px 0 56px;
   }
 
   .hero-inner {
@@ -1511,12 +1756,38 @@ textarea::placeholder {
     display: none;
   }
 
+  /* The portrait becomes a small product card — present, not dominant */
+  .hero-figure {
+    width: 240px;
+  }
+
+  .hero-inner {
+    gap: 32px;
+    padding-top: 32px;
+  }
+
+  .hero-caption {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 4px;
+    padding: 0;
+  }
+
   .field-row {
     grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 640px) {
+  .tile {
+    padding: 48px 0;
+  }
+
+  .work-intro {
+    padding: 48px 0 40px;
+  }
+
   .hero-title {
     font-size: 34px;
   }
@@ -1542,9 +1813,80 @@ textarea::placeholder {
     grid-template-columns: 1fr;
   }
 
+  .about-text {
+    font-size: 19px;
+  }
+
+  /* Configurator options stack full-width, like Apple's phone buy page */
+  .cfg-chips {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .cfg-chip {
+    justify-content: center;
+  }
+
+  .cfg-panel {
+    padding: 24px 20px;
+  }
+
+  .cfg-statement {
+    font-size: 19px;
+  }
+
+  .cfg-stat-value {
+    font-size: 34px;
+  }
+
+  /* Stats become a dense Apple spec-table instead of a three-screen stack */
   .stats-grid {
     grid-template-columns: 1fr;
-    gap: 36px;
+    gap: 0;
+    text-align: left;
+  }
+
+  .stat {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px 0;
+  }
+
+  .stat + .stat {
+    border-top: 1px solid var(--hairline);
+  }
+
+  .stat-value {
+    font-size: 28px;
+  }
+
+  .stat-label {
+    margin-top: 0;
+    text-align: right;
+  }
+
+  .recognition {
+    margin-top: 48px;
+  }
+
+  .award,
+  .side-capsule {
+    padding: 18px 20px;
+  }
+
+  .ucard {
+    padding: 20px;
+  }
+
+  .site-footer {
+    padding: 40px 0 32px;
+  }
+
+  .footer-legal {
+    margin-top: 28px;
   }
 
   .footer-cols {
@@ -1554,12 +1896,8 @@ textarea::placeholder {
 }
 
 @media (max-width: 480px) {
-  .tile {
-    padding: 48px 0;
-  }
-
-  .work-intro {
-    padding: 48px 0 40px;
+  .hero-figure {
+    width: 220px;
   }
 
   .hero-title {
@@ -1583,6 +1921,35 @@ textarea::placeholder {
 
   .admin-topbar {
     flex-direction: column;
+  }
+}
+
+@media (max-width: 419px) {
+  .hero-title {
+    font-size: 28px;
+  }
+
+  .hero-intro {
+    font-size: 17px;
+  }
+
+  .section-title,
+  .project-name,
+  .contact-title,
+  .error-title {
+    font-size: 28px;
+  }
+
+  .tile-inner {
+    padding: 0 20px;
+  }
+
+  .stat-value {
+    font-size: 26px;
+  }
+
+  .cfg-statement {
+    font-size: 17px;
   }
 }
 
