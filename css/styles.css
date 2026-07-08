@@ -728,8 +728,8 @@ html.reveal-on .reveal.is-visible {
 
 .product-img {
   width: 100%;
-  aspect-ratio: 1 / 1;
-  object-fit: cover;
+  /* Natural aspect — the photo is 796×777 (≈1:1), shown uncropped */
+  height: auto;
   border-radius: 18px;
   box-shadow: var(--img-shadow);
 }

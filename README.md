@@ -69,9 +69,10 @@ the admin editor, the favicon and the theme metas.
       still resolve true SF Pro first and only non-Apple devices download
       Inter, immutable `/fonts/(.*)` cache rule in `vercel.json`.
 - [x] **Step 9 — Mobile optimization pass.** The hero portrait becomes a small
-      **square** product card (1:1 crop per the Apple accessory-grid grammar;
-      300px desktop → 240px ≤834 → 180px ≤734 → 160px ≤480 — it no longer
-      dominates any screen); Apple padding ramp 80 → 64 (≤834) → 48px (≤640); stats
+      **square** product card (natural uncropped 796×777 ≈ 1:1, per the Apple
+      accessory-grid grammar; 300px desktop → 240px ≤834 → 180px ≤734 →
+      160px ≤480 — it no longer dominates any screen); Apple padding ramp
+      80 → 64 (≤834) → 48px (≤640); stats
       collapse to a dense spec-table instead of a three-screen stack; new 419px
       small-phone type step; 833 → 834 breakpoint alignment; `svh` fallbacks
       for the iOS 100vh overshoot; 44px touch targets everywhere (theme
