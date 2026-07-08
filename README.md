@@ -24,7 +24,8 @@ the admin editor, the favicon and the theme metas.
   applied only to the hero photo ("product on a surface"). Cards and buttons are
   flat with 1px hairlines.
 - **No gradients.** Anywhere.
-- **SF Pro typography** (system stack) — hero 56/600 with negative tracking,
+- **SF Pro typography** (system stack, with a self-hosted **Inter** variable
+  font so non-Apple devices get a near-identical face) — hero 56/600 with negative tracking,
   display 40/600, body **17px**/400/1.47, footer link columns at 17/2.41,
   fine print 12. Weight ladder 300/400/600/700 — weight 500 is deliberately absent.
 - **Pill grammar** — primary CTAs, chips and search-style inputs are full-radius
@@ -60,7 +61,14 @@ the admin editor, the favicon and the theme metas.
       `js/admin.js` untouched (its DOM contract is preserved).
 - [x] **Step 7 — Final audits.** All passed: exactly one `box-shadow` use (the
       hero photo), zero gradients, zero `font-weight: 500`, every admin.js class
-      styled, all 18 asset references on `?v=3`, sitemap lastmod bumped.
+      styled, all 18 asset references on the same cache-buster version, sitemap
+      lastmod bumped.
+- [x] **Step 8 — Self-hosted Inter.** `fonts/InterVariable.woff2` (official
+      Inter v4 variable font, upright only — the site uses no italics),
+      `@font-face` + font-stack reorder in `css/styles.css` so Apple devices
+      still resolve true SF Pro first and only non-Apple devices download
+      Inter, immutable `/fonts/(.*)` cache rule in `vercel.json`, all asset
+      references bumped to `?v=4`.
 
 ### Verified
 
@@ -75,10 +83,10 @@ the admin editor, the favicon and the theme metas.
 
 ### What remains (nothing blocking — deploy when ready)
 
-Everything planned is done. To ship: `npm run deploy` (or push to the connected
-Git branch). Two optional nice-to-haves are listed at the bottom of this file
-(self-hosted Inter; nothing else outstanding). After deploying, hard-refresh
-once — the `?v=3` cache busters take care of stale CSS/JS for visitors.
+Everything planned is done, including the optional self-hosted Inter font. To
+ship: `npm run deploy` (or push to the connected Git branch). After deploying,
+hard-refresh once — the `?v=4` cache busters take care of stale CSS/JS for
+visitors.
 
 ---
 
@@ -118,6 +126,7 @@ templates/
   layout.js      # <head> + SEO meta/OG/Twitter/JSON-LD + HTML escaping
   home.js        # homepage HTML
 css/styles.css   # all styles (light/dark themed)
+fonts/           # self-hosted Inter variable font (non-Apple devices)
 js/theme.js      # theme toggle + nav + year + reveals (every page)
 js/motion.js     # homepage motion: hero scroll-link, count-up, tilt
 js/hero3d.js     # lazy 3D hero scene (loads vendored Three.js on idle)
@@ -186,7 +195,8 @@ canonical/OG/sitemap URLs are absolute and correct.
 ## Caching
 
 `vercel.json` sets `Cache-Control` for static assets (CSS/JS revalidate hourly +
-stale-while-revalidate; images cached a day; vendored libraries immutable). The
+stale-while-revalidate; images cached a day; vendored libraries and fonts
+immutable). The
 homepage function returns `s-maxage=30, stale-while-revalidate=300`, so it's
 served instantly from the edge while reflecting content edits within ~30s. API
 writes are `no-store`.
@@ -212,9 +222,14 @@ You can also edit `DEFAULT_CONTENT` in `lib/content.js` directly and redeploy �
 for the initial copy or if you prefer git over the UI. Admin-saved values (in the
 store) take precedence over these defaults.
 
-## Optional follow-up ideas (not done)
+## Typography on non-Apple devices
 
-- Self-host the **Inter** variable font (`/fonts/*.woff2` + `@font-face` +
-  a `/fonts/(.*)` immutable cache header in `vercel.json`) so non-Apple devices
-  get a closer match to SF Pro. The current system stack already renders true
-  SF Pro on macOS/iOS — the audience most likely to judge.
+The **Inter** variable font is self-hosted at `fonts/InterVariable.woff2` and
+declared via `@font-face` in `css/styles.css`. In the font stack it sits after
+the Apple-only entries (`-apple-system`, `BlinkMacSystemFont`, SF Pro) and
+before the generic fallbacks, so macOS/iOS render true SF Pro and never
+download the file, while Windows/Android/Linux get Inter — the closest open
+match to SF Pro. Only the upright face ships (the site uses no italics), it
+loads with `font-display: swap`, and it's cached immutably via the
+`/fonts/(.*)` rule in `vercel.json`. The CSP's `font-src 'self'` already
+permits it.

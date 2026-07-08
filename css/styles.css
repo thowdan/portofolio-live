@@ -8,6 +8,21 @@
    ========================================================================== */
 
 /* ==========================================================================
+   Typeface — self-hosted Inter variable font
+   Apple devices resolve -apple-system (true SF Pro) before this face is ever
+   requested, so the ~344 KB download only happens on non-Apple devices. The
+   site uses no italics, so only the upright face ships.
+   ========================================================================== */
+
+@font-face {
+  font-family: 'InterVariable';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/InterVariable.woff2') format('woff2');
+}
+
+/* ==========================================================================
    Design tokens
    ========================================================================== */
 
@@ -99,9 +114,9 @@ body {
   margin: 0;
   background: var(--canvas);
   color: var(--ink);
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Text',
-    'SF Pro Display', 'Helvetica Neue', 'Segoe UI', Roboto, Helvetica, Arial,
-    sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text',
+    'SF Pro Display', 'InterVariable', system-ui, 'Helvetica Neue', 'Segoe UI',
+    Roboto, Helvetica, Arial, sans-serif;
   font-size: 17px;
   font-weight: 400;
   line-height: 1.47;
