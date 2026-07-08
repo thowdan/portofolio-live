@@ -718,7 +718,7 @@ html.reveal-on .reveal.is-visible {
 .hero-figure {
   perspective: 900px;
   justify-self: center;
-  width: min(100%, 400px);
+  width: min(100%, 300px);
 }
 
 .hero-photo {
@@ -728,7 +728,7 @@ html.reveal-on .reveal.is-visible {
 
 .product-img {
   width: 100%;
-  aspect-ratio: 4 / 5;
+  aspect-ratio: 1 / 1;
   object-fit: cover;
   border-radius: 18px;
   box-shadow: var(--img-shadow);
@@ -1727,7 +1727,7 @@ textarea::placeholder {
   }
 
   .hero-figure {
-    width: min(100%, 340px);
+    width: min(100%, 240px);
   }
 
   .section-title,
@@ -1758,7 +1758,7 @@ textarea::placeholder {
 
   /* The portrait becomes a small product card — present, not dominant */
   .hero-figure {
-    width: 240px;
+    width: 180px;
   }
 
   .hero-inner {
@@ -1897,7 +1897,7 @@ textarea::placeholder {
 
 @media (max-width: 480px) {
   .hero-figure {
-    width: 220px;
+    width: 160px;
   }
 
   .hero-title {

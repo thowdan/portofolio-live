@@ -238,7 +238,7 @@ ${head(content, { path: '/' })}
         </div>
         <div class="reveal hero-figure" style="--reveal-delay:200ms" data-hero-figure>
           <div class="hero-photo" data-tilt>
-            <img class="product-img" src="${esc(identity.photo)}" alt="${esc(identity.name)}" width="640" height="800" loading="eager" fetchpriority="high" decoding="async">
+            <img class="product-img" src="${esc(identity.photo)}" alt="${esc(identity.name)}" width="640" height="640" loading="eager" fetchpriority="high" decoding="async">
           </div>
           <div class="hero-caption">
             <div>
@@ -359,10 +359,10 @@ ${head(content, { path: '/' })}
     </div>
   </footer>
 
-  <script src="/js/theme.js?v=5" defer></script>
-  <script src="/js/motion.js?v=5" defer></script>
-  <script src="/js/configurator.js?v=5" defer></script>
-  <script type="module" src="/js/hero3d.js?v=5"></script>
+  <script src="/js/theme.js?v=6" defer></script>
+  <script src="/js/motion.js?v=6" defer></script>
+  <script src="/js/configurator.js?v=6" defer></script>
+  <script type="module" src="/js/hero3d.js?v=6"></script>
 </body>
 </html>`;
 }
